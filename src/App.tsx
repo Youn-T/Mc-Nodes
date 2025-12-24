@@ -519,9 +519,130 @@ function FlowContent() {
   const rfInstance = useRef<ReactFlowInstance | null>(null);
   const flowWrapper = useRef<HTMLDivElement>(null);
 
+  // État pour la ligne de coupe (Ctrl + drag gauche)
+  const cutState = useRef<{
+    active: boolean;
+    start: { x: number; y: number } | null;
+    end: { x: number; y: number } | null;
+  }>({ active: false, start: null, end: null });
+
   const onInit = useCallback((instance: ReactFlowInstance) => {
     rfInstance.current = instance;
   }, []);
+
+  // Fonction pour projeter les coordonnées écran vers le flow
+  const projectToFlow = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!rfInstance.current || !flowWrapper.current) return null;
+      const bounds = flowWrapper.current.getBoundingClientRect();
+      return rfInstance.current.screenToFlowPosition({
+        x: clientX - bounds.left,
+        y: clientY - bounds.top,
+      });
+    },
+    [],
+  );
+
+  // Vérifie si deux segments s'intersectent
+  const segmentsIntersect = useCallback(
+    (
+      a1: { x: number; y: number },
+      a2: { x: number; y: number },
+      b1: { x: number; y: number },
+      b2: { x: number; y: number },
+    ) => {
+      const cross = (
+        p: { x: number; y: number },
+        q: { x: number; y: number },
+        r: { x: number; y: number },
+      ) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+      const d1 = cross(a1, a2, b1);
+      const d2 = cross(a1, a2, b2);
+      const d3 = cross(b1, b2, a1);
+      const d4 = cross(b1, b2, a2);
+      return d1 * d2 < 0 && d3 * d4 < 0;
+    },
+    [],
+  );
+
+  // Gestionnaire de mousedown pour démarrer la coupe
+  const handleMouseDown = useCallback(
+    (event: React.MouseEvent) => {
+      // Ctrl + clic gauche pour couper des liens
+      if (event.button === 2 && event.ctrlKey) {
+        const start = projectToFlow(event.clientX, event.clientY);
+        if (start) {
+          cutState.current = { active: true, start, end: start };
+          event.preventDefault();
+        }
+      }
+    },
+    [projectToFlow],
+  );
+
+  // Gestionnaire de mousemove pour mettre à jour la ligne de coupe
+  const handleMouseMove = useCallback(
+    (event: React.MouseEvent) => {
+      if (cutState.current.active && event.ctrlKey) {
+        const end = projectToFlow(event.clientX, event.clientY);
+        if (end) {
+          cutState.current = { ...cutState.current, end };
+        }
+      }
+    },
+    [projectToFlow],
+  );
+
+  // Gestionnaire de mouseup pour finaliser la coupe
+  const handleMouseUp = useCallback(
+    (event: React.MouseEvent) => {
+      if (
+        event.button === 2 &&
+        cutState.current.active &&
+        cutState.current.start &&
+        cutState.current.end
+      ) {
+        const cutStart = cutState.current.start;
+        const cutEnd = cutState.current.end;
+
+        // Récupérer les edges SVG du DOM pour tester l'intersection
+        const edgesToRemove: string[] = [];
+        const edgePaths = document.querySelectorAll('.react-flow__edge-path');
+
+        edgePaths.forEach((pathEl) => {
+          const path = pathEl as SVGPathElement;
+          const edgeId = path.closest('.react-flow__edge')?.getAttribute('data-id');
+          if (!edgeId) return;
+
+          // Échantillonner le path pour créer des segments
+          const pathLength = path.getTotalLength();
+          const samples = 20;
+
+          for (let i = 0; i < samples; i++) {
+            const p1 = path.getPointAtLength((i / samples) * pathLength);
+            const p2 = path.getPointAtLength(((i + 1) / samples) * pathLength);
+
+            // Convertir les points SVG en coordonnées flow
+            const svgPoint1 = { x: p1.x, y: p1.y };
+            const svgPoint2 = { x: p2.x, y: p2.y };
+
+            if (segmentsIntersect(cutStart, cutEnd, svgPoint1, svgPoint2)) {
+              edgesToRemove.push(edgeId);
+              break;
+            }
+          }
+        });
+
+        if (edgesToRemove.length > 0) {
+          setEdges((eds) => eds.filter((edge) => !edgesToRemove.includes(edge.id)));
+        }
+
+        cutState.current = { active: false, start: null, end: null };
+        event.preventDefault();
+      }
+    },
+    [segmentsIntersect, setEdges],
+  );
 
   useEffect(() => {
     const container = flowWrapper.current;
@@ -577,18 +698,6 @@ function FlowContent() {
     [setEdges],
   );
 
-  const onMove = useCallback((mvt: OnMove) => {
-    console.log('Move event:', mvt);
-    const edgeFound = document
-        .elementsFromPoint(mvt.clientX, mvt.clientX)
-        .find((el) =>
-          el.classList.contains('react-flow__edge-interaction'),
-        )?.parentElement;
-
-      const edgeId = edgeFound?.dataset.id;
-
-      if (edgeId) updateEdge(edgeId, { style: { stroke: 'black' } });
-  }, []);
   // NODE ADD TO EDGE
   const { updateEdge, getEdge, addEdges } = useReactFlow();
 
@@ -643,6 +752,8 @@ function FlowContent() {
     [updateEdge],
   );
 
+  
+
   // NODE ADD TO EDGE
   return (
     <div ref={flowWrapper} style={{ width: '100vw', height: '100vh', display: 'flex' }}>
@@ -650,10 +761,12 @@ function FlowContent() {
         nodes={nodes}
         edges={edges}
         onInit={onInit}
-        onPaneMouseMove={onMove}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
         panOnScroll={false}
         zoomOnScroll={false}
         zoomOnPinch={false}
