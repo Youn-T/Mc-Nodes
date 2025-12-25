@@ -436,7 +436,7 @@
 // export default App;
 
 // // export default Flow;
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import {
   ReactFlow,
   addEdge,
@@ -449,11 +449,15 @@ import {
   OnNodeDrag,
   useReactFlow,
   ReactFlowProvider,
+  reconnectEdge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
+import ContextMenu from './components/ContextualMenu';
+
 import CustomNode, { SocketTypes } from './components/CustomNode';
 import './components/CustomNode.css';
+import './components/ContextualMenu.css';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -511,24 +515,47 @@ const initialEdges = [
 
 ];
 
-const panOnDrag = [1, 2];
+const panOnDrag = [1]; // Seulement le clic molette pour React Flow, on gère le clic droit manuellement
 
 function FlowContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const rfInstance = useRef<ReactFlowInstance | null>(null);
   const flowWrapper = useRef<HTMLDivElement>(null);
+  const [menu, setMenu] = useState(null);
+
+  // État pour le pan avec clic droit
+  const rightClickState = useRef<{
+    isDown: boolean;
+    startPos: { x: number; y: number } | null;
+    lastPos: { x: number; y: number } | null;
+    hasMoved: boolean;
+  }>({ isDown: false, startPos: null, lastPos: null, hasMoved: false });
+
+  const PAN_THRESHOLD = 5; // Distance minimale pour considérer un drag
+
+  // COUPE DES LIENS
+
+  const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && menu) {
+        setMenu(null);
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape);
+
+  const onInit = useCallback((instance: ReactFlowInstance) => {
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    rfInstance.current = instance;
+  }, []);
 
   // État pour la ligne de coupe (Ctrl + drag gauche)
+
   const cutState = useRef<{
     active: boolean;
     start: { x: number; y: number } | null;
     end: { x: number; y: number } | null;
   }>({ active: false, start: null, end: null });
-
-  const onInit = useCallback((instance: ReactFlowInstance) => {
-    rfInstance.current = instance;
-  }, []);
 
   // Fonction pour projeter les coordonnées écran vers le flow
   const projectToFlow = useCallback(
@@ -568,8 +595,23 @@ function FlowContent() {
   // Gestionnaire de mousedown pour démarrer la coupe
   const handleMouseDown = useCallback(
     (event: React.MouseEvent) => {
-      // Ctrl + clic gauche pour couper des liens
-      if (event.button === 2 && event.ctrlKey) {
+      console.log(event.button);
+      // Clic droit : préparer le pan ou le menu contextuel
+      if (event.button === 2) {
+        rightClickState.current = {
+          isDown: true,
+          startPos: { x: event.clientX, y: event.clientY },
+          lastPos: { x: event.clientX, y: event.clientY },
+          hasMoved: false,
+        };
+        // Ne pas empêcher l'événement pour l'instant
+        return;
+      }
+
+      // Ctrl + clic droit pour couper des liens (gardé pour compatibilité)
+      if (event.button === 0 && event.ctrlKey) {
+                
+
         const start = projectToFlow(event.clientX, event.clientY);
         if (start) {
           cutState.current = { active: true, start, end: start };
@@ -583,6 +625,36 @@ function FlowContent() {
   // Gestionnaire de mousemove pour mettre à jour la ligne de coupe
   const handleMouseMove = useCallback(
     (event: React.MouseEvent) => {
+      // Pan avec clic droit
+      if (rightClickState.current.isDown && rfInstance.current && rightClickState.current.lastPos) {
+        console.log('Panning with right click');
+        const dx = event.clientX - rightClickState.current.lastPos.x;
+        const dy = event.clientY - rightClickState.current.lastPos.y;
+
+        // Vérifier si on a dépassé le seuil de mouvement
+        if (!rightClickState.current.hasMoved && rightClickState.current.startPos) {
+          const totalDx = event.clientX - rightClickState.current.startPos.x;
+          const totalDy = event.clientY - rightClickState.current.startPos.y;
+          const distance = Math.sqrt(totalDx * totalDx + totalDy * totalDy);
+
+          if (distance > PAN_THRESHOLD) {
+            rightClickState.current.hasMoved = true;
+            // Fermer le menu si ouvert
+            setMenu(null);
+          }
+        }
+
+        // Si on a bougé, effectuer le pan
+        if (rightClickState.current.hasMoved) {
+          const vp = rfInstance.current.getViewport();
+          rfInstance.current.setViewport({ x: vp.x + dx, y: vp.y + dy, zoom: vp.zoom });
+        }
+
+        rightClickState.current.lastPos = { x: event.clientX, y: event.clientY };
+        return;
+      }
+
+      // Mise à jour de la ligne de coupe
       if (cutState.current.active && event.ctrlKey) {
         const end = projectToFlow(event.clientX, event.clientY);
         if (end) {
@@ -590,14 +662,48 @@ function FlowContent() {
         }
       }
     },
-    [projectToFlow],
+    [projectToFlow, setMenu],
   );
 
   // Gestionnaire de mouseup pour finaliser la coupe
   const handleMouseUp = useCallback(
     (event: React.MouseEvent) => {
+      // Fin du clic droit
+      if (event.button === 2) {
+        const hasMoved = rightClickState.current.hasMoved;
+        rightClickState.current = { isDown: false, startPos: null, lastPos: null, hasMoved: false };
+
+        // Si on n'a pas bougé, laisser le menu contextuel s'afficher
+        // Le menu sera géré par onPaneContextMenu / onNodeContextMenu
+        if (hasMoved) {
+          // Empêcher le menu contextuel natif si on a fait un pan
+          event.preventDefault();
+        } else {
+          console.log(menu);
+          if (menu == null) {
+            event.preventDefault();
+            const pane = flowWrapper.current?.getBoundingClientRect();
+            if (!pane) return;
+
+            setMenu({
+              id: "pane",
+              top: event.clientY < pane.height - 200 && event.clientY,
+              left: event.clientX < pane.width - 200 && event.clientX,
+              right: event.clientX >= pane.width - 200 && pane.width - event.clientX,
+              bottom:
+                event.clientY >= pane.height - 200 && pane.height - event.clientY,
+            });
+          } else {
+            
+            setMenu(null);
+          }
+
+        }
+        return;
+      }
+
+      // Coupe des liens (si implémenté avec un autre bouton)
       if (
-        event.button === 2 &&
         cutState.current.active &&
         cutState.current.start &&
         cutState.current.end
@@ -641,8 +747,30 @@ function FlowContent() {
         event.preventDefault();
       }
     },
-    [segmentsIntersect, setEdges],
+    [segmentsIntersect, setEdges, setMenu, menu],
   );
+
+  // Bloquer le menu contextuel natif si on a fait un pan
+  useEffect(() => {
+    const container = flowWrapper.current;
+    if (!container) return;
+
+    const handleContextMenu = (e: MouseEvent) => {
+      // Si on a fait un pan, bloquer le menu natif
+      if (rightClickState.current.hasMoved) {
+        e.preventDefault();
+      }
+    };
+
+    container.addEventListener('contextmenu', handleContextMenu);
+
+    
+
+    return () => {
+      container.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
 
   useEffect(() => {
     const container = flowWrapper.current;
@@ -694,7 +822,23 @@ function FlowContent() {
   }, []);
 
   const onConnect = useCallback(
-    (connection) => setEdges((eds) => addEdge(connection, eds)),
+    (connection) => {
+      console.log('onConnect', connection);
+      const target = nodes.find(n => n.id === connection.target);
+      const source = nodes.find(n => n.id === connection.source);
+      if (!target || !source) return;
+      const targetHandle = target.data.inputs.find(h => h.id === connection.targetHandle);
+      const sourceHandle = source.data.outputs.find(h => h.id === connection.sourceHandle);
+      console.log('Connected', sourceHandle, 'to', targetHandle);
+
+      if (sourceHandle?.type !== targetHandle?.type) {
+        console.log('Incompatible socket types:', sourceHandle?.type, 'and', targetHandle?.type);
+        return;
+      }
+
+      setEdges((eds) => addEdge(connection, eds));
+
+    },
     [setEdges],
   );
 
@@ -752,7 +896,84 @@ function FlowContent() {
     [updateEdge],
   );
 
-  
+  // DISCONECT EDGES 
+  const edgeReconnectSuccessful = useRef(true);
+
+  const onReconnectStart = useCallback(() => {
+    edgeReconnectSuccessful.current = false;
+  }, []);
+
+  const onReconnect = useCallback((oldEdge, newConnection) => {
+    edgeReconnectSuccessful.current = true;
+    setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
+  }, []);
+
+  const onReconnectEnd = useCallback((_, edge) => {
+    if (!edgeReconnectSuccessful.current) {
+      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+    }
+
+    edgeReconnectSuccessful.current = true;
+  }, []);
+
+  // Suppression de la ref inutile (on utilise flowWrapper)
+  // const ref = useRef(null);
+
+  const onPaneContextMenu = useCallback(
+    (event: React.MouseEvent) => {
+      // Empêcher le menu natif immédiatement
+      event.preventDefault();
+
+      console.log('pane context menu');
+      // Utiliser flowWrapper pour les dimensions
+      // const pane = flowWrapper.current?.getBoundingClientRect();
+      // if (!pane) return;
+
+      // setMenu({
+      //   id: "pane",
+      //   top: event.clientY < pane.height - 200 && event.clientY,
+      //   left: event.clientX < pane.width - 200 && event.clientX,
+      //   right: event.clientX >= pane.width - 200 && pane.width - event.clientX,
+      //   bottom:
+      //     event.clientY >= pane.height - 200 && pane.height - event.clientY,
+      // });
+    },
+    [setMenu],
+  );
+
+  // Ajouter un handler pour les noeuds pour empêcher le menu natif
+  const onNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: any) => {
+      event.preventDefault();
+
+      // const pane = flowWrapper.current?.getBoundingClientRect();
+      // if (!pane) return;
+
+      // setMenu({
+      //   id: node.id,
+      //   top: event.clientY < pane.height - 200 && event.clientY,
+      //   left: event.clientX < pane.width - 200 && event.clientX,
+      //   right: event.clientX >= pane.width - 200 && pane.width - event.clientX,
+      //   bottom:
+      //     event.clientY >= pane.height - 200 && pane.height - event.clientY,
+      // });
+    },
+    [setMenu],
+  );
+
+  // Ajouter un handler pour les edges pour empêcher le menu natif
+  const onEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: any) => {
+      event.preventDefault();
+      // Logique spécifique pour les edges si nécessaire
+      console.log('edge context menu', edge);
+    },
+    [],
+  );
+
+  // Close the context menu if it's open whenever the window is clicked.
+  const onPaneClick = useCallback(() => setMenu(null), [setMenu]);
+
 
   // NODE ADD TO EDGE
   return (
@@ -761,6 +982,9 @@ function FlowContent() {
         nodes={nodes}
         edges={edges}
         onInit={onInit}
+        onReconnectStart={onReconnectStart}
+        onReconnect={onReconnect}
+        onReconnectEnd={onReconnectEnd}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -778,9 +1002,14 @@ function FlowContent() {
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         selectionMode={SelectionMode.Partial}
+        onPaneContextMenu={onPaneContextMenu}
+        onNodeContextMenu={onNodeContextMenu}
+        onEdgeContextMenu={onEdgeContextMenu}
+        onPaneClick={onPaneClick}
         fitView
       >
         <Background />
+        {menu && <ContextMenu {...menu} />}
       </ReactFlow>
     </div>
   );

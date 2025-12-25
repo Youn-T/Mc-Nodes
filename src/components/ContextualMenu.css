@@ -1,0 +1,25 @@
+.custom-menu {
+    min-width: 160px;
+    background: #181818;
+    border-radius: 6px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border: 1px solid #1a1a1a;
+    border-color: #2F2F2F;
+
+}
+
+.custom-menu h2 {
+    color: #989898;
+    text-shadow: #1A1A1A 0px 0px 1px;
+    font-weight: 500;
+}
+
+.custom-menu-separator {
+    border-top: 1px solid #2F2F2F;
+}
+
+.custom-menu-item:hover {
+    background-color: #3F3F3F;
+}
