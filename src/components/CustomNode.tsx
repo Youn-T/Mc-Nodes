@@ -8,21 +8,22 @@ export interface CustomNodeData {
   outputs?: { id: string; label: string; type: string }[];
 }
 
-export enum SocketTypes {
-  TRIGGER = 'trigger',
-  VALUE = 'value',
-}
+import { SocketType, SocketMode } from '../nodes/nodes';
+
 
 // Couleurs par type de socket
-const socketColors: Record<string, string> = {
-  geometry: '#1D725E',
-  mesh: '#00d084',
-  vector: '#1D725E',
-  float: '#a1a1a1',
-  int: '#598c5c',
-  boolean: '#cc6677',
-  string: '#70b2ff',
-  default: '#a1a1a1',
+const socketColors = {
+  boolean: "#CC4545",
+  integer: "#CC9645",
+  float: "#B1CC45",
+  string: "#60CC45",
+  vector: "#45CC7B",
+  entity: "#45CCCC",
+  item: "#457BCC",
+  block: "#6045CC",
+  player: "#B145CC",
+  rotation: "#CC4596",
+  camera: "#457BCC",
 };
 
 function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
@@ -63,23 +64,23 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
                   background: 'transparent',
                   border: 'none',
                 }}
-              >{output.type === SocketTypes.TRIGGER && <Triangle
-                  fill="#FFF"
-                  style={{
-                    pointerEvents: 'none',
-                    fontSize: '0.5px',
-                    width: '12px',
-                    bottom: "-8.85px",
-                    right: '-3px',
-                    position: 'absolute',
-                    color: '#fff',
-                    rotate: '90deg',
-                  }}
-                />
+              >{output.mode === SocketMode.TRIGGER && <Triangle
+                fill="#FFF"
+                style={{
+                  pointerEvents: 'none',
+                  fontSize: '0.5px',
+                  width: '12px',
+                  bottom: "-8.85px",
+                  right: '-3px',
+                  position: 'absolute',
+                  color: '#fff',
+                  rotate: '90deg',
+                }}
+              />
                 }
-                
-                {output.type === SocketTypes.VALUE && <Diamond
-                  fill="#FFF"
+
+                {output.mode === SocketMode.VALUE && <Diamond
+                  fill={socketColors[output.type]}
                   style={{
                     pointerEvents: 'none',
                     fontSize: '0.5px',
@@ -107,7 +108,7 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
                   background: 'transparent',
                   border: 'none',
                 }}>
-                {input.type === SocketTypes.TRIGGER && <Triangle
+                {input.mode === SocketMode.TRIGGER && <Triangle
                   fill="#FFF"
                   style={{
                     pointerEvents: 'none',
@@ -121,9 +122,9 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
                   }}
                 />
                 }
-                
-                {input.type === SocketTypes.VALUE && <Diamond
-                  fill="#FFF"
+
+                {input.mode === SocketMode.VALUE && <Diamond
+                  fill={socketColors[input.type]}
                   style={{
                     pointerEvents: 'none',
                     fontSize: '0.5px',
@@ -136,7 +137,7 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
                   }}
                 />
                 }
-                  
+
 
               </Handle>
               {/* <span className="custom-node-socket-indicator" style={{ background: socketColors[input.type] || socketColors.default }} /> */}
@@ -149,7 +150,7 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
       {!wrapped && <div
         className={`custom-node-wrapped ${selected ? 'selected' : ''}`}
         style={{
-          '---headercolor': headerColor,
+          '--header-color': headerColor,
         } as React.CSSProperties}
       >
         {/* Header */}
@@ -174,35 +175,35 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
                     background: 'transparent',
                     border: 'none',
                   }}>
-                  {input.type === SocketTypes.TRIGGER && <Triangle
-                  fill="#FFF"
-                  style={{
-                    pointerEvents: 'none',
-                    fontSize: '0.5px',
-                    width: '12px',
-                    bottom: "-8.85px",
-                    right: '-3px',
-                    position: 'absolute',
-                    color: '#fff',
-                    rotate: '-90deg',
-                  }}
-                />
-                }
-                
-                {input.type === SocketTypes.VALUE && <Diamond
-                  fill="#FFF"
-                  style={{
-                    pointerEvents: 'none',
-                    fontSize: '0.5px',
-                    width: '12px',
-                    bottom: "-8.85px",
-                    right: '-3px',
-                    position: 'absolute',
-                    color: '#fff',
-                    rotate: '-90deg',
-                  }}
-                />
-                }
+                  {input.mode === SocketMode.TRIGGER && <Triangle
+                    fill="#FFF"
+                    style={{
+                      pointerEvents: 'none',
+                      fontSize: '0.5px',
+                      width: '12px',
+                      bottom: "-8.85px",
+                      right: '-3px',
+                      position: 'absolute',
+                      color: '#fff',
+                      rotate: '-90deg',
+                    }}
+                  />
+                  }
+
+                  {input.mode === SocketMode.VALUE && <Diamond
+                    fill={socketColors[input.type]}
+                    style={{
+                      pointerEvents: 'none',
+                      fontSize: '0.5px',
+                      width: '12px',
+                      bottom: "-8.85px",
+                      right: '-3px',
+                      position: 'absolute',
+                      color: '#fff',
+                      rotate: '-90deg',
+                    }}
+                  />
+                  }
                 </Handle>
                 {/* <span className="custom-node-socket-indicator" style={{ background: socketColors[input.type] || socketColors.default }} /> */}
               </div>
@@ -210,16 +211,16 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
           <div className="gap-y-[6px] flex flex-col">
             {outputs.map((output, index) => (
               <div key={output.id} className="custom-node-row output-row">
-<Handle
-                type="source"
-                position={Position.Right}
-                id={output.id}
-                className="custom-handle"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                }}
-              >{output.type === SocketTypes.TRIGGER && <Triangle
+                <Handle
+                  type="source"
+                  position={Position.Right}
+                  id={output.id}
+                  className="custom-handle"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                  }}
+                >{output.mode === SocketMode.TRIGGER && <Triangle
                   fill="#FFF"
                   style={{
                     pointerEvents: 'none',
@@ -232,22 +233,22 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
                     rotate: '90deg',
                   }}
                 />
-                }
-                
-                {output.type === SocketTypes.VALUE && <Diamond
-                  fill="#FFF"
-                  style={{
-                    pointerEvents: 'none',
-                    fontSize: '0.5px',
-                    width: '12px',
-                    bottom: "-8.85px",
-                    right: '-3px',
-                    position: 'absolute',
-                    color: '#fff',
-                    rotate: '-90deg',
-                  }}
-                />
-                }</Handle>
+                  }
+
+                  {output.mode === SocketMode.VALUE && <Diamond
+                    fill={socketColors[output.type]}
+                    style={{
+                      pointerEvents: 'none',
+                      fontSize: '0.5px',
+                      width: '12px',
+                      bottom: "-8.85px",
+                      right: '-3px',
+                      position: 'absolute',
+                      color: '#fff',
+                      rotate: '-90deg',
+                    }}
+                  />
+                  }</Handle>
               </div>
             ))}
           </div>

@@ -14,10 +14,9 @@ import {
   reconnectEdge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-
 import ContextMenu from './components/ContextualMenu';
 
-import CustomNode, { SocketTypes } from './components/CustomNode';
+import CustomNode from './components/CustomNode';
 import './components/CustomNode.css';
 import './components/ContextualMenu.css';
 
@@ -26,52 +25,7 @@ const nodeTypes = {
 };
 
 const initialNodes = [
-  {
-    id: '1',
-    type: 'custom',
-    position: { x: 0, y: 0 },
-    data: {
-      label: 'Start Event',
-      inputs: [],
-      outputs: [
-        { id: 'trigger', label: 'Trigger', type: SocketTypes.TRIGGER },
-      ],
-    },
-  },
-  {
-    id: '2',
-    type: 'custom',
-    position: { x: 250, y: 0 },
-    data: {
-      label: 'Give Item',
-      inputs: [
-        { id: 'trigger', label: 'Trigger', type: SocketTypes.TRIGGER },
-        { id: 'player', label: 'Player', type: SocketTypes.VALUE },
-        { id: 'item', label: 'Item', type: SocketTypes.VALUE },
-        { id: 'amount', label: 'Amount', type: SocketTypes.VALUE },
-      ],
-      outputs: [
-        { id: 'success', label: 'Success', type: SocketTypes.VALUE },
-      ],
-    },
-  },
-  {
-    id: '3',
-    type: 'custom',
-    position: { x: 250, y: 0 },
-    data: {
-      label: 'Give Item',
-      inputs: [
-        { id: 'trigger', label: 'Trigger', type: SocketTypes.TRIGGER },
-        { id: 'player', label: 'Player', type: SocketTypes.VALUE },
-        { id: 'item', label: 'Item', type: SocketTypes.VALUE },
-        { id: 'amount', label: 'Amount', type: SocketTypes.VALUE },
-      ],
-      outputs: [
-        { id: 'success', label: 'Success', type: SocketTypes.VALUE },
-      ],
-    },
-  }
+
 ];
 const initialEdges = [
 
@@ -395,7 +349,7 @@ function FlowContent() {
       const targetHandle = target.data.inputs.find(h => h.id === connection.targetHandle);
       const sourceHandle = source.data.outputs.find(h => h.id === connection.sourceHandle);
 
-      if (sourceHandle?.type !== targetHandle?.type) {
+      if ((sourceHandle?.mode !== targetHandle?.mode) || (sourceHandle?.type !== targetHandle?.type)) {
         return;
       }
       
@@ -523,6 +477,7 @@ function FlowContent() {
   const onPaneClick = useCallback(() => setMenu(null), [setMenu]);
   const onNodeClick = useCallback(() => setMenu(null), [setMenu]);
   const onNodeDragStart = useCallback(() => setMenu(null), [setMenu]);
+
 
   // NODE ADD TO EDGE
   return (

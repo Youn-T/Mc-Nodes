@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { ReactFlowState, useReactFlow, useStore } from '@xyflow/react';
 import CustomNode, { SocketTypes } from './CustomNode';
+import { menu, nodes} from '../nodes/nodes';
 
 type ContextMenuProps = {
   id?: string;
@@ -85,85 +86,85 @@ function MenuItem({ node, renderMenu, rfInstance, setMenu }: MenuItemProps) {
     </div>
   );
 }
+console.log(menu);
+// const menu = [
+//   [
+//     {
+//       name: "Events",
+//       options: [
+//         [
+//           {
+//             name: "Event with Reward",
+//             options: [
+//               [
+//                 { name: "Start Event", node: "..." }
+//               ],
+//               [
+//                 { name: "Give Item", node: ".." }
+//               ]
+//             ]
+//           },
+//           { name: "Start Event", node: "..." }
+//         ],
+//         [
+//           { name: "Start Event", node: "..." }
+//         ]
+//       ]
+//     },
+//     {
+//       name: "Common Events",
+//       options: [
+//         [
+//           { name: "Start Event", node: "..." }
+//         ],
+//         [
+//           { name: "Start Event", node: "..." }
+//         ]
+//       ]
+//     }
+//   ],
+//   [
+//     {
+//       name: "Other Events",
+//       options: [
+//         [
+//           { name: "Start Event", node: "..." }
+//         ],
+//         [
+//           { name: "Start Event", node: "..." }
+//         ]
+//       ]
+//     }
+//   ]
+// ];
 
-const menu = [
-  [
-    {
-      name: "Events",
-      options: [
-        [
-          {
-            name: "Event with Reward",
-            options: [
-              [
-                { name: "Start Event", node: "..." }
-              ],
-              [
-                { name: "Give Item", node: ".." }
-              ]
-            ]
-          },
-          { name: "Start Event", node: "..." }
-        ],
-        [
-          { name: "Start Event", node: "..." }
-        ]
-      ]
-    },
-    {
-      name: "Common Events",
-      options: [
-        [
-          { name: "Start Event", node: "..." }
-        ],
-        [
-          { name: "Start Event", node: "..." }
-        ]
-      ]
-    }
-  ],
-  [
-    {
-      name: "Other Events",
-      options: [
-        [
-          { name: "Start Event", node: "..." }
-        ],
-        [
-          { name: "Start Event", node: "..." }
-        ]
-      ]
-    }
-  ]
-];
-
-const nodes = {
-  "...": {
-    type: 'custom',
-    data: {
-      label: 'Start Event',
-      inputs: [],
-      outputs: [
-        { id: 'trigger', label: 'Trigger', type: SocketTypes.TRIGGER },
-      ],
-    },
-  },
-  "..": {
-        type: 'custom',
-    data: {
-      label: 'Give Item',
-      inputs: [
-        { id: 'trigger', label: 'Trigger', type: SocketTypes.TRIGGER },
-        { id: 'player', label: 'Player', type: SocketTypes.VALUE },
-        { id: 'item', label: 'Item', type: SocketTypes.VALUE },
-        { id: 'amount', label: 'Amount', type: SocketTypes.VALUE },
-      ],
-      outputs: [
-        { id: 'success', label: 'Success', type: SocketTypes.VALUE },
-      ],
-    }
-  }
-}
+// const nodes = {
+//   "...": {
+//     type: 'custom',
+//     data: {
+//       label: 'Start Event',
+//       inputs: [],
+//       outputs: [
+//         { id: 'trigger', label: 'Trigger', type: SocketTypes.TRIGGER },
+//       ],
+//     },
+//   },
+//   "..": {
+//     type: 'custom',
+//     data: {
+//       label: 'Give Item',
+//       inputs: [
+//         { id: 'trigger', label: 'Trigger', type: SocketTypes.TRIGGER },
+//         { id: 'player', label: 'Player', type: SocketTypes.VALUE },
+//         { id: 'item', label: 'Item', type: SocketTypes.VALUE },
+//         { id: 'amount', label: 'Amount', type: SocketTypes.VALUE },
+//       ],
+//       outputs: [
+//         { id: 'success', label: 'Success', type: SocketTypes.VALUE },
+//       ],
+//     }
+//   }
+// }
 
 export default function ContextMenu({
   id,
