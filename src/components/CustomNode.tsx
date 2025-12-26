@@ -33,7 +33,7 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
     outputs = [],
   } = data;
 
-  const [wrapped, setWrapped] = useState(false);
+  const [wrapped, setWrapped] = useState(true);
 
   return (
     <>
