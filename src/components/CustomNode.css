@@ -29,6 +29,11 @@
     /* box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4); */
 }
 
+.custom-node-wrapped.selected {
+    border-color: #fff;
+    /* box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4); */
+}
+
 /* Header */
 .custom-node-header {
     background: var(--header-color, #2d8f6f);
