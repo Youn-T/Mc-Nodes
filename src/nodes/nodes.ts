@@ -302,7 +302,7 @@ const recursivelyAddItems = (menuAcc: menuOption[][], itemMenu: string[], itemNo
         const existingOptions = menuAcc[menuAcc.indexOf(existingMenuDivision)][existingMenuDivision.indexOf(existingCategory)].options || [[]]
         menuAcc[menuAcc.indexOf(existingMenuDivision)][existingMenuDivision.indexOf(existingCategory)].options = recursivelyAddItems(existingOptions, itemMenu.slice(1), itemNode)
     } else {
-            console.log(itemMenu, menuAcc)
+            console.log(itemMenu, menuAcc, itemNode)
             
 
         if (itemMenu.length < 1) {
@@ -322,7 +322,7 @@ const recursivelyAddItems = (menuAcc: menuOption[][], itemMenu: string[], itemNo
             if (firstCatFree) {
                 menuAcc.splice(0,0, [])
             }
-            menuAcc[0].push({ name: itemMenu[0], options: recursivelyAddItems([[  ]], itemMenu.slice(1, -1), itemNode) })
+            menuAcc[0].push({ name: itemMenu[0], options: recursivelyAddItems([[  ]], itemMenu.slice(1), itemNode) })
         }
     }
 

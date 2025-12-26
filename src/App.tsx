@@ -39,6 +39,7 @@ function FlowContent() {
   const rfInstance = useRef<ReactFlowInstance | null>(null);
   const flowWrapper = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState(null);
+  const [snapToGrid, setSnapToGrid] = useState(false);
 
   // État pour le pan avec clic droit
   const rightClickState = useRef<{
@@ -53,12 +54,29 @@ function FlowContent() {
   // COUPE DES LIENS
 
   const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && menu) {
-        setMenu(null);
-      }
+    if (e.key === 'Escape' && menu) {
+      setMenu(null);
     }
+  }
 
-    document.addEventListener('keydown', handleEscape);
+  const snapToGridHandlerEnable = (e: KeyboardEvent) => {
+    if (e.key === 'Control') {
+      setSnapToGrid(true);
+    }
+  }
+
+  const snapToGridHandlerDisable = (e: KeyboardEvent) => {
+    if (e.key === 'Control') {
+      setSnapToGrid(false);
+    }
+  }
+
+  document.addEventListener('keydown', handleEscape);
+  document.addEventListener('keydown', snapToGridHandlerEnable);
+  document.addEventListener('keyup', snapToGridHandlerDisable);
+
+  
+
 
   const onInit = useCallback((instance: ReactFlowInstance) => {
     document.addEventListener('contextmenu', event => event.preventDefault());
@@ -125,7 +143,7 @@ function FlowContent() {
 
       // Ctrl + clic droit pour couper des liens (gardé pour compatibilité)
       if (event.button === 0 && event.ctrlKey) {
-                
+
 
         const start = projectToFlow(event.clientX, event.clientY);
         if (start) {
@@ -199,7 +217,7 @@ function FlowContent() {
             if (!pane) return;
 
             // Calculer la position en coordonnées flow
-            
+
 
             setMenu({
               id: "pane",
@@ -212,9 +230,9 @@ function FlowContent() {
               rfInstance: rfInstance.current,
               setMenu: setMenu,
             });
-            
+
           } else {
-            
+
             setMenu(null);
           }
 
@@ -284,11 +302,13 @@ function FlowContent() {
 
     container.addEventListener('contextmenu', handleContextMenu);
 
-    
+
 
     return () => {
       container.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('keydown', snapToGridHandlerEnable);
+      document.removeEventListener('keyup', snapToGridHandlerDisable);
     };
   }, []);
 
@@ -352,7 +372,7 @@ function FlowContent() {
       if ((sourceHandle?.mode !== targetHandle?.mode) || (sourceHandle?.type !== targetHandle?.type)) {
         return;
       }
-      
+
       const previousEdges = edges.filter(e => e.target === connection.target && e.targetHandle === connection.targetHandle);
 
       setEdges((eds) => (addEdge(connection, eds)).filter(e => !previousEdges.includes(e)));
@@ -511,6 +531,8 @@ function FlowContent() {
         onEdgeContextMenu={onEdgeContextMenu}
         onPaneClick={onPaneClick}
         onNodeDragStart={onNodeDragStart}
+        snapToGrid={snapToGrid}
+        snapGrid={[20, 20]}
         onNodeClick={onNodeClick}
         fitView
       >
