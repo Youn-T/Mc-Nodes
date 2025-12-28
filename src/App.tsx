@@ -19,6 +19,8 @@ import ContextMenu from './components/ContextualMenu';
 import CustomNode from './components/CustomNode';
 import './components/CustomNode.css';
 import './components/ContextualMenu.css';
+import Sidebar from './components/Sidebar';
+import { SocketType } from './nodes/types';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -369,7 +371,7 @@ function FlowContent() {
       const targetHandle = target.data.inputs.find(h => h.id === connection.targetHandle);
       const sourceHandle = source.data.outputs.find(h => h.id === connection.sourceHandle);
 
-      if ((sourceHandle?.mode !== targetHandle?.mode) || (sourceHandle?.type !== targetHandle?.type)) {
+      if ((sourceHandle?.mode !== targetHandle?.mode) || (sourceHandle?.type !== targetHandle?.type && !(targetHandle?.type === SocketType.FLOAT && sourceHandle?.type === SocketType.INT) && sourceHandle?.type !== SocketType.OTHER && targetHandle?.type !== SocketType.OTHER)) {
         return;
       }
 
@@ -501,8 +503,9 @@ function FlowContent() {
 
   // NODE ADD TO EDGE
   return (
-    <div ref={flowWrapper} style={{ width: '100vw', height: '100vh', display: 'flex' }}>
-      <ReactFlow
+    <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
+      <div ref={flowWrapper} style={{ flex: 1 }}>
+        <ReactFlow
         nodes={nodes}
         edges={edges}
         onInit={onInit}
@@ -539,6 +542,8 @@ function FlowContent() {
         <Background />
         {menu && <ContextMenu {...menu} />}
       </ReactFlow>
+      </div>
+      <Sidebar nodes={nodes} edges={edges} />
     </div>
   );
 }
