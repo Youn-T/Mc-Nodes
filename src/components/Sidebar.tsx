@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-
+import  { useState } from 'react';
+import { Compilator } from '../compilator/compilator';
 interface SidebarProps {
   nodes?: any[];
   edges?: any[];
@@ -7,39 +7,20 @@ interface SidebarProps {
 
 export default function Sidebar({ nodes = [], edges = [] }: SidebarProps) {
   const [generated, setGenerated] = useState('');
-  const [tab, setTab] = useState<'export' | 'code' | 'settings'>('export');
 
   const generateCode = () => {
-    try {
-      const payload = { nodes, edges, generatedAt: new Date().toISOString() };
-      const code = JSON.stringify(payload, null, 2);
-      setGenerated(code);
-    } catch (e) {
-      setGenerated('// Erreur lors de la génération');
-    }
+    // try {
+      const payload = { nodes: nodes, connections: edges };
+
+      const compilator = new Compilator(payload as any);
+
+
+      setGenerated(compilator.compile());
+    // } catch (e) {
+      // setGenerated(`// Erreur lors de la génération ${e}`);
+    // }
   };
 
-  const downloadPack = () => {
-    const payload = { nodes, edges, generatedAt: new Date().toISOString() };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'mc-nodes-pack.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  };
-
-  const copyCode = async () => {
-    if (!generated) generateCode();
-    try {
-      await navigator.clipboard.writeText(generated || JSON.stringify({ nodes, edges }));
-    } catch (e) {
-      // noop
-    }
-  };
 
   return (
     <aside
@@ -68,16 +49,16 @@ export default function Sidebar({ nodes = [], edges = [] }: SidebarProps) {
         value={generated}
         readOnly
         onFocus={() => { if (!generated) generateCode(); }}
-        style={{ flex: 1, width: '100%', minHeight: 200, background: '#1A1A1A', color: '#dbeafe' , padding: 8, border: '1px solid rgba(255,255,255,0.04)' }}
+        style={{ flex: 1, width: '100%', minHeight: 200, background: '#1A1A1A', color: '#dbeafe', padding: 8, border: '1px solid rgba(255,255,255,0.04)' }}
       />
 
-      {tab === 'export' && (
+      {/* {tab === 'export' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
         </div>
-      )}
+      )} */}
 
-      {tab === 'code' && (
+      {/* {tab === 'code' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
           <div style={{ fontSize: 13, opacity: 0.9 }}>Code généré</div>
 
@@ -86,7 +67,7 @@ export default function Sidebar({ nodes = [], edges = [] }: SidebarProps) {
             <button onClick={downloadPack} style={{ padding: '8px' }}>Télécharger</button>
           </div>
         </div>
-      )}
+      )} */}
 
     </aside>
   );

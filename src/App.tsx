@@ -6,17 +6,18 @@ import {
   useEdgesState,
   useNodesState,
   Background,
-  ReactFlowInstance,
-  OnMove,
+  getOutgoers,
   OnNodeDrag,
   useReactFlow,
   ReactFlowProvider,
   reconnectEdge,
+  Edge,
+  Connection,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import ContextMenu from './components/ContextualMenu';
 
-import CustomNode from './components/CustomNode';
+import CustomNode, { CustomNodeType } from './components/CustomNode';
 import './components/CustomNode.css';
 import './components/ContextualMenu.css';
 import Sidebar from './components/Sidebar';
@@ -26,22 +27,44 @@ const nodeTypes = {
   custom: CustomNode,
 };
 
-const initialNodes = [
-
-];
-const initialEdges = [
-
-];
+const initialNodes: CustomNodeType[] = [];
+const initialEdges: Edge[] = [];
 
 const panOnDrag = [1]; // Seulement le clic molette pour React Flow, on gère le clic droit manuellement
 
 function FlowContent() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const rfInstance = useRef<ReactFlowInstance | null>(null);
+  const rfInstance = useRef<any>(null);
   const flowWrapper = useRef<HTMLDivElement>(null);
-  const [menu, setMenu] = useState(null);
+  const [menu, setMenu] = useState<any>(null);
   const [snapToGrid, setSnapToGrid] = useState(false);
+
+  // Callback pour mettre à jour les valeurs d'un socket (input ou output) d'un node
+  const { setNodes, getNodes, getEdges } = useReactFlow<CustomNodeType, Edge>();
+  const onNodeDataChange = useCallback((nodeId: string, socketId: string, value: string | Record<string, string>, isOutput: boolean) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === nodeId) {
+          const socketList = isOutput ? 'outputs' : 'inputs';
+          const updatedSockets = (node.data[socketList] || []).map((socket: any) => {
+            if (socket.id === socketId) {
+              return { ...socket, value };
+            }
+            return socket;
+          });
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              [socketList]: updatedSockets,
+            },
+          };
+        }
+        return node;
+      })
+    );
+  }, [setNodes]);
 
   // État pour le pan avec clic droit
   const rightClickState = useRef<{
@@ -80,7 +103,7 @@ function FlowContent() {
   
 
 
-  const onInit = useCallback((instance: ReactFlowInstance) => {
+  const onInit = useCallback((instance: any) => {
     document.addEventListener('contextmenu', event => event.preventDefault());
     rfInstance.current = instance;
   }, []);
@@ -364,12 +387,12 @@ function FlowContent() {
   }, []);
 
   const onConnect = useCallback(
-    (connection) => {
+    (connection: Connection) => {
       const target = nodes.find(n => n.id === connection.target);
       const source = nodes.find(n => n.id === connection.source);
       if (!target || !source) return;
-      const targetHandle = target.data.inputs.find(h => h.id === connection.targetHandle);
-      const sourceHandle = source.data.outputs.find(h => h.id === connection.sourceHandle);
+      const targetHandle = target.data.inputs?.find((h: any) => h.id === connection.targetHandle);
+      const sourceHandle = source.data.outputs?.find((h: any) => h.id === connection.sourceHandle);
 
       if ((sourceHandle?.mode !== targetHandle?.mode) || (sourceHandle?.type !== targetHandle?.type && !(targetHandle?.type === SocketType.FLOAT && sourceHandle?.type === SocketType.INT) && sourceHandle?.type !== SocketType.OTHER && targetHandle?.type !== SocketType.OTHER)) {
         return;
@@ -389,7 +412,7 @@ function FlowContent() {
   const overlappedEdgeRef = useRef<string | null>(null);
 
   const onNodeDragStop: OnNodeDrag = useCallback(
-    (event, node) => {
+    (_event, node) => {
       const edgeId = overlappedEdgeRef.current;
       if (!edgeId) return;
       const edge = getEdge(edgeId);
@@ -409,7 +432,7 @@ function FlowContent() {
   );
 
   const onNodeDrag: OnNodeDrag = useCallback(
-    (e, node) => {
+    (_e, node) => {
       // Correction du sélecteur : pas d'espace entre la classe et l'attribut
       const nodeDiv = document.querySelector(
         `.react-flow__node[data-id="${node.id}"]`,
@@ -444,32 +467,32 @@ function FlowContent() {
     edgeReconnectSuccessful.current = false;
   }, []);
 
-  const onReconnect = useCallback((oldEdge, newConnection) => {
+  const onReconnect = useCallback((oldEdge: Edge, newConnection: Connection) => {
     edgeReconnectSuccessful.current = true;
     setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
-  }, []);
+  }, [setEdges]);
 
-  const onReconnectEnd = useCallback((_, edge) => {
+  const onReconnectEnd = useCallback((_: MouseEvent | TouchEvent, edge: Edge) => {
     if (!edgeReconnectSuccessful.current) {
       setEdges((eds) => eds.filter((e) => e.id !== edge.id));
     }
 
     edgeReconnectSuccessful.current = true;
-  }, []);
+  }, [setEdges]);
 
   // Suppression de la ref inutile (on utilise flowWrapper)
   // const ref = useRef(null);
 
   const onPaneContextMenu = useCallback(
-    (event: React.MouseEvent) => {
+    (event: MouseEvent | React.MouseEvent) => {
       event.preventDefault();
     },
-    [setMenu],
+    [],
   );
 
   // Ajouter un handler pour les noeuds pour empêcher le menu natif
   const onNodeContextMenu = useCallback(
-    (event: React.MouseEvent, node: any) => {
+    (event: React.MouseEvent, _node: any) => {
       event.preventDefault();
 
       // const pane = flowWrapper.current?.getBoundingClientRect();
@@ -489,7 +512,7 @@ function FlowContent() {
 
   // Ajouter un handler pour les edges pour empêcher le menu natif
   const onEdgeContextMenu = useCallback(
-    (event: React.MouseEvent, edge: any) => {
+    (event: React.MouseEvent, _edge: any) => {
       event.preventDefault();
     },
     [],
@@ -502,11 +525,46 @@ function FlowContent() {
 
 
   // NODE ADD TO EDGE
+  // Injecter la callback onDataChange dans chaque node
+  const nodesWithCallback = nodes.map((node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      onDataChange: (socketId: string, value: string | Record<string, string>, isOutput: boolean) => 
+        onNodeDataChange(node.id, socketId, value, isOutput),
+    },
+  }));
+
+  const isValidConnection = useCallback(
+    (connection: any) => {
+      // we are using getNodes and getEdges helpers here
+      // to make sure we create isValidConnection function only once
+      const nodes = getNodes();
+      const edges = getEdges();
+      const target = nodes.find((node) => node.id === connection.target);
+      const hasCycle = (node: any, visited = new Set()) => {
+        if (visited.has(node.id)) return false;
+ 
+        visited.add(node.id);
+ 
+        for (const outgoer of getOutgoers(node, nodes, edges)) {
+          if (outgoer.id === connection.source) return true;
+          if (hasCycle(outgoer, visited)) return true;
+        }
+      };
+ 
+      if (target?.id === connection.source) return false;
+      return !hasCycle(target);
+    },
+    [getNodes, getEdges],
+  );
+
+
   return (
     <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
       <div ref={flowWrapper} style={{ flex: 1 }}>
         <ReactFlow
-        nodes={nodes}
+        nodes={nodesWithCallback}
         edges={edges}
         onInit={onInit}
         onReconnectStart={onReconnectStart}
@@ -537,6 +595,7 @@ function FlowContent() {
         snapToGrid={snapToGrid}
         snapGrid={[20, 20]}
         onNodeClick={onNodeClick}
+        isValidConnection={isValidConnection}
         fitView
       >
         <Background />

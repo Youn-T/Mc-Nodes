@@ -797,7 +797,7 @@ export const rawNodes: rawNode[] = [
 export const nodes: Record<string, node> = rawNodes.reduce((obj: Record<string, node>, item: rawNode) => {
     const id = getItemId(item.name);
     obj[id] = {
-        type: 'custom',
+        type: 'custom', 
         data: {
             label: item.label ? item.label : item.name.replace(/\b\w/g, c => c.toUpperCase()),
             inputs: item.inputs.map((input) => ({ id: input.name.toLowerCase().replace(/\s+/g, '_'), label: input.name.replace(/\s+/g, '_'), mode: input.mode, type: input.type })),

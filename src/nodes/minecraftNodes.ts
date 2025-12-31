@@ -1211,5 +1211,17 @@ export const minecraftNodes: rawNode[] = [
         ],
         outputs: [{ name: 'trigger', mode: SocketMode.TRIGGER }],
         menu: ["World", "TickingArea"]
+    },
+    {
+        name: 'get array element by index',
+        inputs: [
+            { name: 'trigger', mode: SocketMode.TRIGGER },
+            { name: 'array', mode: SocketMode.VALUE, type: SocketType.OTHER },
+            { name: 'index', mode: SocketMode.VALUE, type: SocketType.INT }
+        ],
+        outputs: [{ name: 'trigger', mode: SocketMode.TRIGGER },
+        { name: 'element', mode: SocketMode.VALUE, type: SocketType.OTHER }
+        ],
+        menu: ["Array"]
     }
 ];

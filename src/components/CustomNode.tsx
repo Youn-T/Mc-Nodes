@@ -1,20 +1,32 @@
-import { memo, useState, useEffect } from 'react';
-import { Handle, Position, NodeProps, useHandleConnections } from '@xyflow/react';
+import { memo, useState } from 'react';
+import { Handle, Position, useHandleConnections, Node } from '@xyflow/react';
 import { Diamond, Triangle } from 'lucide-react'
-export interface CustomNodeData {
-  label: string;
-  headerColor?: string;
-  inputs?: { id: string; label: string; type: string }[];
-  outputs?: { id: string; label: string; type: string }[];
-  category?: string;
-  name?: string;
-}
 
 import { SocketType, SocketMode } from '../nodes/types';
 
+export type SocketData = {
+  id: string;
+  label: string;
+  type: string;
+  mode?: string;
+  value?: string | Record<string, string>; // string pour les types simples, Record pour les vecteurs {0: "x", 1: "y", 2: "z"}
+};
+
+export type CustomNodeData = {
+  label: string;
+  headerColor?: string;
+  inputs?: SocketData[];
+  outputs?: SocketData[];
+  category?: string;
+  name?: string;
+  onDataChange?: (socketId: string, value: string | Record<string, string>, isOutput: boolean) => void;
+};
+
+export type CustomNodeType = Node<CustomNodeData, 'custom'>;
+
 
 // Couleurs par type de socket
-const socketColors = {
+const socketColors: Record<string, string> = {
   boolean: "#CC4545",
   integer: "#CC9645",
   float: "#B1CC45",
@@ -36,7 +48,12 @@ const socketDefaultValue = {
   vector: 0,
 }
 
-const InputRow = ({ input, internalId, nodeInputs, setNodeInputs }: { input: any, internalId: string, nodeInputs: any, setNodeInputs: any }) => {
+const InputRow = ({ input, internalId, getSocketValue, updateSocketValue }: { 
+  input: SocketData, 
+  internalId: string, 
+  getSocketValue: (socket: SocketData, componentIndex?: number) => string,
+  updateSocketValue: (socketId: string, newValue: string, isOutput: boolean, componentIndex?: number) => void
+}) => {
   const connections = useHandleConnections({
     type: 'target',
     id: input.id
@@ -89,39 +106,65 @@ const InputRow = ({ input, internalId, nodeInputs, setNodeInputs }: { input: any
         {/* <span className="custom-node-socket-indicator" style={{ background: socketColors[input.type] || socketColors.default }} /> */}
         <span className="custom-node-label input-label ">{input.label}</span>
       </div>
-      {connections.length === 0 && socketDefaultValue.hasOwnProperty(input.type) && nodeInput({ type: input.type as SocketType, id: input.id, internalId, nodeInputs, setNodeInputs })
+      {connections.length === 0 && socketDefaultValue.hasOwnProperty(input.type) && 
+        nodeInput({ type: input.type as SocketType, socket: input, internalId, getSocketValue, updateSocketValue, isOutput: false })
       }
     </div>
   );
 };
 
-function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
+function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boolean; id?: string }) {
   const {
     label,
     headerColor = '#2d8f6f',
     inputs = [],
     outputs = [],
     category = "",
-    name = "",
+    onDataChange,
   } = data;
 
   const [wrapped, setWrapped] = useState(true);
   const internalId = Math.random().toString(36).substring(2, 9);
-  const [nodeInputs, setNodeInputs] = useState<{ [key: string]: string }>({});
+  
+  // Fonction pour obtenir la valeur d'un socket (input ou output)
+  const getSocketValue = (socket: SocketData, componentIndex?: number): string => {
+    const socketType = socket.type as keyof typeof socketDefaultValue;
+    const defaultVal = socketDefaultValue[socketType];
+    
+    if (socket.type === 'vector') {
+      // Pour les vecteurs, la valeur est un Record<string, string>
+      const vectorValue = socket.value as Record<string, string> | undefined;
+      if (vectorValue && componentIndex !== undefined && vectorValue[componentIndex] !== undefined) {
+        return vectorValue[componentIndex];
+      }
+      return String(socketDefaultValue.vector);
+    } else {
+      // Pour les autres types
+      if (socket.value !== undefined) {
+        return socket.value as string;
+      }
+      return defaultVal !== undefined ? String(defaultVal) : '';
+    }
+  };
 
-  useEffect(() => {
-    // Populate only missing inputs with stringified default values to keep inputs controlled
-    setNodeInputs(prev => {
-      const next = { ...prev };
-      inputs.forEach(i => {
-        if (next[i.id] === undefined) {
-          const def = socketDefaultValue[i.type as keyof typeof socketDefaultValue];
-          next[i.id] = def !== undefined ? String(def) : '';
-        }
-      });
-      return next;
-    });
-  }, [inputs]);
+  // Fonction pour mettre à jour la valeur d'un socket
+  const updateSocketValue = (socketId: string, newValue: string, isOutput: boolean, componentIndex?: number) => {
+    if (!onDataChange) return;
+    
+    const socketList = isOutput ? outputs : inputs;
+    const socket = socketList.find(s => s.id === socketId);
+    if (!socket) return;
+    
+    if (socket.type === 'vector' && componentIndex !== undefined) {
+      // Pour les vecteurs, on met à jour un composant spécifique
+      const currentValue = (socket.value as Record<string, string>) || { '0': '0', '1': '0', '2': '0' };
+      const updatedValue = { ...currentValue, [componentIndex]: newValue };
+      onDataChange(socketId, updatedValue, isOutput);
+    } else {
+      // Pour les autres types
+      onDataChange(socketId, newValue, isOutput);
+    }
+  };
 
   return (
     <>
@@ -186,7 +229,8 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
                   />
                   }</Handle>
               </div>
-              {(socketDefaultValue.hasOwnProperty(output.type) && category === "Constant") && nodeInput({ type: output.type as SocketType, id: output.id, internalId, nodeInputs, setNodeInputs })
+              {(socketDefaultValue.hasOwnProperty(output.type) && category === "Constant") && 
+                nodeInput({ type: output.type as SocketType, socket: output, internalId, getSocketValue, updateSocketValue, isOutput: true })
               }
             </div>
           ))}
@@ -197,8 +241,8 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
               key={input.id}
               input={input}
               internalId={internalId}
-              nodeInputs={nodeInputs}
-              setNodeInputs={setNodeInputs}
+              getSocketValue={getSocketValue}
+              updateSocketValue={updateSocketValue}
             />
           ))}
         </div>
@@ -316,13 +360,21 @@ function CustomNode({ data, selected }: NodeProps<CustomNodeData>) {
 }
 
 
-function nodeInput({ type, id, internalId, nodeInputs, setNodeInputs }: { type: SocketType; id: string; internalId: string, nodeInputs: Record<string, any>, setNodeInputs: React.Dispatch<React.SetStateAction<Record<string, any>>> }) {
+function nodeInput({ type, socket, internalId, getSocketValue, updateSocketValue, isOutput }: { 
+  type: SocketType; 
+  socket: SocketData; 
+  internalId: string;
+  getSocketValue: (socket: SocketData, componentIndex?: number) => string;
+  updateSocketValue: (socketId: string, newValue: string, isOutput: boolean, componentIndex?: number) => void;
+  isOutput: boolean;
+}) {
+  const id = socket.id;
 
   return (<>
     {Array.from(type === 'vector' ? [0, 1, 2] : [0]).map((compIdx) => {
-      const key = type === 'vector' ? `${id}_${compIdx}` : id;
+      const currentValue = getSocketValue(socket, type === 'vector' ? compIdx : undefined);
       return (
-        <div className="custom-node-value-row" key={key}>
+        <div className="custom-node-value-row" key={`${id}-${compIdx}`}>
           <span className="custom-node-value-label cursor-text" onClick={() => {
             document.getElementById(`input-${internalId}-${id}-${compIdx}`)?.focus();
           }}>Value</span>
@@ -330,13 +382,13 @@ function nodeInput({ type, id, internalId, nodeInputs, setNodeInputs }: { type: 
             id={`input-${internalId}-${id}-${compIdx}`}
             type="text"
             className='custom-node-input rounded-sm text-right'
-            value={nodeInputs[key] ?? String(socketDefaultValue[type as keyof typeof socketDefaultValue])}
+            value={currentValue}
             onChange={(evt) => {
               const v = evt.target.value;
 
               // Autorise les étapes intermédiaires (vide, "-") pour une meilleure UX
               if (v === '' || v === '-') {
-                setNodeInputs(prev => ({ ...prev, [key]: v }));
+                updateSocketValue(id, v, isOutput, type === 'vector' ? compIdx : undefined);
                 return;
               }
 
@@ -353,7 +405,7 @@ function nodeInput({ type, id, internalId, nodeInputs, setNodeInputs }: { type: 
                 return;
               }
 
-              setNodeInputs(prev => ({ ...prev, [key]: v }));
+              updateSocketValue(id, v, isOutput, type === 'vector' ? compIdx : undefined);
             }}
             onFocus={(evt) => { evt.target.select() }}
           />
