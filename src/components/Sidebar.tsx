@@ -15,7 +15,7 @@ export default function Sidebar({ nodes = [], edges = [] }: SidebarProps) {
       const compilator = new Compilator(payload as any);
 
 
-      setGenerated(compilator.compile());
+      setGenerated(compilator.compile() );
     // } catch (e) {
       // setGenerated(`// Erreur lors de la génération ${e}`);
     // }
@@ -26,17 +26,6 @@ export default function Sidebar({ nodes = [], edges = [] }: SidebarProps) {
     <aside
       className='w-110 p-4'
       style={{ backgroundColor: "#303030" }}
-    // style={{
-    //   width: 320,
-    //   minWidth: 260,
-    //   backgroundColor: '#0f1720',
-    //   color: '#e6eef8',
-    //   borderLeft: '1px solid rgba(255,255,255,0.04)',
-    //   display: 'flex',
-    //   flexDirection: 'column',
-    //   padding: '1rem',
-    //   gap: '0.75rem'
-    // }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h3 className='text-white text-xl font-semibold mb-2'>Export & Génération</h3>

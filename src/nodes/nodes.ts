@@ -28,6 +28,14 @@ const getItemId = (name: string) => {
     return name.toLowerCase().replace(/\s+/g, '_');
 }
 
+const socketDefaultValue = {
+  boolean: false,
+  integer: 0,
+  float: 0.0,
+  string: "",
+  vector: 0,
+}
+
 // ==========================================
 // NODES DEFINITION
 // ==========================================
@@ -800,8 +808,8 @@ export const nodes: Record<string, node> = rawNodes.reduce((obj: Record<string, 
         type: 'custom', 
         data: {
             label: item.label ? item.label : item.name.replace(/\b\w/g, c => c.toUpperCase()),
-            inputs: item.inputs.map((input) => ({ id: input.name.toLowerCase().replace(/\s+/g, '_'), label: input.name.replace(/\s+/g, '_'), mode: input.mode, type: input.type })),
-            outputs: item.outputs.map((output) => ({ id: output.name.toLowerCase().replace(/\s+/g, '_'), label: output.name.replace(/\s+/g, '_'), mode: output.mode, type: output.type })),
+            inputs: item.inputs.map((input) => ({ id: input.name.toLowerCase().replace(/\s+/g, '_'), label: input.name.replace(/\s+/g, '_'), mode: input.mode, type: input.type, ...(socketDefaultValue.hasOwnProperty(input.type as string) && {value: socketDefaultValue[input.type as keyof typeof socketDefaultValue]}) })),
+            outputs: item.outputs.map((output) => ({ id: output.name.toLowerCase().replace(/\s+/g, '_'), label: output.name.replace(/\s+/g, '_'), mode: output.mode, type: output.type, ...(socketDefaultValue.hasOwnProperty(output.type as string) && {value: socketDefaultValue[output.type as keyof typeof socketDefaultValue]}) })),
             headerColor: item.color ? item.color : nodeColors[item.menu[0]],
             category: item.menu[0],
             name: item.name

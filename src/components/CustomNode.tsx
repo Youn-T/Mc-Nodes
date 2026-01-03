@@ -11,7 +11,7 @@ export type SocketData = {
   mode?: string;
   value?: string | Record<string, string>; // string pour les types simples, Record pour les vecteurs {0: "x", 1: "y", 2: "z"}
 };
-
+ 
 export type CustomNodeData = {
   label: string;
   headerColor?: string;
@@ -182,7 +182,7 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
         {/* Body */}
         <div className="custom-node-body">
           {/* Outputs (droite) */}
-          {outputs.map((output, index) => (
+          {outputs.map((output, _index) => (
             <div key={output.id} className="custom-node-row output-row flex flex-col items-end">
 
 
@@ -236,7 +236,7 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
           ))}
 
           {/* Inputs (gauche) */}
-          {inputs.map((input, index) => (
+          {inputs.map((input, _index) => (
             <InputRow
               key={input.id}
               input={input}
@@ -265,7 +265,7 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
 
           <div className="gap-y-[6px] flex flex-col">
             {/* Inputs (gauche) */}
-            {inputs.map((input, index) => (
+            {inputs.map((input, _index) => (
               <div key={input.id} className="custom-node-row input-row">
                 <Handle
                   type="target"
@@ -310,7 +310,7 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
               </div>
             ))}</div>
           <div className="gap-y-[6px] flex flex-col">
-            {outputs.map((output, index) => (
+            {outputs.map((output, _index) => (
               <div key={output.id} className="custom-node-row output-row">
                 <Handle
                   type="source"

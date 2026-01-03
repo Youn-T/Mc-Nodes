@@ -13,6 +13,7 @@ import {
   reconnectEdge,
   Edge,
   Connection,
+  getIncomers,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import ContextMenu from './components/ContextualMenu';
@@ -100,7 +101,7 @@ function FlowContent() {
   document.addEventListener('keydown', snapToGridHandlerEnable);
   document.addEventListener('keyup', snapToGridHandlerDisable);
 
-  
+
 
 
   const onInit = useCallback((instance: any) => {
@@ -343,6 +344,13 @@ function FlowContent() {
 
     const handleWheel = (event: WheelEvent) => {
       if (!rfInstance.current) return;
+      // Vérifier si l'événement provient d'un élément scrollable dans le menu contextuel
+      const target = event.target as HTMLElement;
+      const scrollableMenu = target.closest('.custom-menu-scroll');
+      if (scrollableMenu) {
+        // Laisser le scroll natif se produire dans le menu
+        return;
+      }
 
       // empêcher le scroll natif de la page (possible car passive: false)
       event.preventDefault();
@@ -398,7 +406,7 @@ function FlowContent() {
         return;
       }
 
-      const previousEdges = edges.filter(e => e.target === connection.target && e.targetHandle === connection.targetHandle);
+      const previousEdges = edges.filter(e => (e.target === connection.target && e.targetHandle === connection.targetHandle) );
 
       setEdges((eds) => (addEdge(connection, eds)).filter(e => !previousEdges.includes(e)));
 
@@ -464,15 +472,18 @@ function FlowContent() {
   const edgeReconnectSuccessful = useRef(true);
 
   const onReconnectStart = useCallback(() => {
+    console.log('Reconnect started');
     edgeReconnectSuccessful.current = false;
   }, []);
 
   const onReconnect = useCallback((oldEdge: Edge, newConnection: Connection) => {
+    console.log('Reconnect in progress');
     edgeReconnectSuccessful.current = true;
     setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
   }, [setEdges]);
 
   const onReconnectEnd = useCallback((_: MouseEvent | TouchEvent, edge: Edge) => {
+    console.log('Reconnect ended');
     if (!edgeReconnectSuccessful.current) {
       setEdges((eds) => eds.filter((e) => e.id !== edge.id));
     }
@@ -523,6 +534,29 @@ function FlowContent() {
   const onNodeClick = useCallback(() => setMenu(null), [setMenu]);
   const onNodeDragStart = useCallback(() => setMenu(null), [setMenu]);
 
+  const onConnectEnd = useCallback((event: MouseEvent, connectionState: any) => {
+    const pane = flowWrapper.current?.getBoundingClientRect();
+    if (connectionState.toNode) return;
+    if (!pane) return;
+    console.log(connectionState);
+    // Calculer la position en coordonnées flow
+
+
+    setMenu({
+      id: "pane",
+      top: event.clientY < pane.height - 200 && event.clientY,
+      left: event.clientX < pane.width - 200 && event.clientX,
+      right: event.clientX >= pane.width - 200 && pane.width - event.clientX,
+      bottom: event.clientY >= pane.height - 200 && pane.height - event.clientY,
+      flowWrapper: flowWrapper,
+      reactFlowInstance: rfInstance,
+      rfInstance: rfInstance.current,
+      setMenu: setMenu,
+      connectTo: connectionState,
+    });
+
+
+  }, []);
 
   // NODE ADD TO EDGE
   // Injecter la callback onDataChange dans chaque node
@@ -530,7 +564,7 @@ function FlowContent() {
     ...node,
     data: {
       ...node.data,
-      onDataChange: (socketId: string, value: string | Record<string, string>, isOutput: boolean) => 
+      onDataChange: (socketId: string, value: string | Record<string, string>, isOutput: boolean) =>
         onNodeDataChange(node.id, socketId, value, isOutput),
     },
   }));
@@ -542,19 +576,36 @@ function FlowContent() {
       const nodes = getNodes();
       const edges = getEdges();
       const target = nodes.find((node) => node.id === connection.target);
+      const source = nodes.find((node) => node.id === connection.source);
+
+      // CYCLE DETECTION
       const hasCycle = (node: any, visited = new Set()) => {
         if (visited.has(node.id)) return false;
- 
+
         visited.add(node.id);
- 
+
         for (const outgoer of getOutgoers(node, nodes, edges)) {
           if (outgoer.id === connection.source) return true;
           if (hasCycle(outgoer, visited)) return true;
         }
       };
- 
+
       if (target?.id === connection.source) return false;
-      return !hasCycle(target);
+
+      // CONNECTION HERITAGE
+      const isParent = (parent: string, node: string)  => {
+        const inComers = edges.filter(edge => edge.target === node && edge.targetHandle === "trigger")
+
+        for (const inComer of inComers) {
+          if (parent === inComer.source) return true;
+          if (isParent(parent, inComer.source)) return true;
+        }
+
+        return false; 
+      }
+      console.log(isParent(source?.id || "", target?.id || ""));
+      return !hasCycle(target) && ( connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true);
+
     },
     [getNodes, getEdges],
   );
@@ -564,43 +615,44 @@ function FlowContent() {
     <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
       <div ref={flowWrapper} style={{ flex: 1 }}>
         <ReactFlow
-        nodes={nodesWithCallback}
-        edges={edges}
-        onInit={onInit}
-        onReconnectStart={onReconnectStart}
-        onReconnect={onReconnect}
-        onReconnectEnd={onReconnectEnd}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        panOnScroll={false}
-        zoomOnScroll={false}
-        zoomOnPinch={false}
-        zoomOnDoubleClick={false}
-        preventScrolling={false}
-        selectionOnDrag
-        panOnDrag={panOnDrag}
-        nodeTypes={nodeTypes}
-        onNodeDrag={onNodeDrag}
-        onNodeDragStop={onNodeDragStop}
-        selectionMode={SelectionMode.Partial}
-        onPaneContextMenu={onPaneContextMenu}
-        onNodeContextMenu={onNodeContextMenu}
-        onEdgeContextMenu={onEdgeContextMenu}
-        onPaneClick={onPaneClick}
-        onNodeDragStart={onNodeDragStart}
-        snapToGrid={snapToGrid}
-        snapGrid={[20, 20]}
-        onNodeClick={onNodeClick}
-        isValidConnection={isValidConnection}
-        fitView
-      >
-        <Background />
-        {menu && <ContextMenu {...menu} />}
-      </ReactFlow>
+          nodes={nodesWithCallback}
+          edges={edges}
+          onInit={onInit}
+          onReconnectStart={onReconnectStart}
+          onReconnect={onReconnect}
+          onReconnectEnd={onReconnectEnd}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onConnectEnd={onConnectEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          panOnScroll={false}
+          zoomOnScroll={false}
+          zoomOnPinch={false}
+          zoomOnDoubleClick={false}
+          preventScrolling={false}
+          selectionOnDrag
+          panOnDrag={panOnDrag}
+          nodeTypes={nodeTypes}
+          onNodeDrag={onNodeDrag}
+          onNodeDragStop={onNodeDragStop}
+          selectionMode={SelectionMode.Partial}
+          onPaneContextMenu={onPaneContextMenu}
+          onNodeContextMenu={onNodeContextMenu}
+          onEdgeContextMenu={onEdgeContextMenu}
+          onPaneClick={onPaneClick}
+          onNodeDragStart={onNodeDragStart}
+          snapToGrid={snapToGrid}
+          snapGrid={[20, 20]}
+          onNodeClick={onNodeClick}
+          isValidConnection={isValidConnection}
+          fitView
+        >
+          <Background />
+          {menu && <ContextMenu {...menu} />}
+        </ReactFlow>
       </div>
       <Sidebar nodes={nodes} edges={edges} />
     </div>

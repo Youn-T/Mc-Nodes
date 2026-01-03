@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from 'react';
-import { ReactFlowState, useReactFlow, useStore } from '@xyflow/react';
-import CustomNode, { SocketTypes } from './CustomNode';
-import { menu, nodes} from '../nodes/nodes';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Edge, ReactFlowState, useReactFlow, useStore } from '@xyflow/react';
+import { menu, nodes } from '../nodes/nodes';
+import { Search } from 'lucide-react';
 
 type ContextMenuProps = {
   id?: string;
@@ -18,6 +18,7 @@ type MenuItemProps = {
   renderMenu: (menuGroups: any) => React.ReactNode;
   rfInstance: any;
   setMenu: any;
+  connectTo: any;
 };
 const selector = (state: ReactFlowState) => {
   return {
@@ -25,10 +26,10 @@ const selector = (state: ReactFlowState) => {
   };
 };
 // Composant séparé pour chaque item de menu
-function MenuItem({ node, renderMenu, rfInstance, setMenu }: MenuItemProps) {
+function MenuItem({ node, renderMenu, rfInstance, setMenu, connectTo }: MenuItemProps) {
   const [isOpen, setIsOpen] = useState(false);
   const hasOptions = node.hasOwnProperty("options");
-  const { getNode, setNodes, addNodes, setEdges } = useReactFlow();
+  const { getNode, setNodes, addNodes, setEdges, addEdges } = useReactFlow();
   const { unselectAll } = useStore(selector);
 
   if (hasOptions) {
@@ -71,18 +72,85 @@ function MenuItem({ node, renderMenu, rfInstance, setMenu }: MenuItemProps) {
         });
 
         unselectAll();
+
+        const id = Date.now();
+
         addNodes({
           ...nodes[nodeKey],
           selected: true,
           dragging: true,
           position: flowPosition,
-          id: `${Date.now()}`, // Unique ID
+          id: `${id}`, // Unique ID
         });
+
+        // connectTo est le connectionState de React Flow
+        // Il contient fromNode.id et fromHandle.id (pas source/sourceHandle)
+        console.log("connectTo:", connectTo);
+        if (connectTo && connectTo.fromNode && connectTo.fromHandle) {
+          addEdges({
+            id: `e${connectTo.fromNode.id}-${id}`,
+            source: connectTo.fromNode.id,
+            sourceHandle: connectTo.fromHandle.id,
+            target: `${id}`,
+            targetHandle: "trigger",
+          } as Edge)
+        }
+
         setMenu(null);
         /**Handle Node Addition */
       }}
     >
       <span className='pl-6'>{node.name}</span>
+    </div>
+  );
+}
+
+
+function SingleMenuItem({ node, rfInstance, setMenu, connectTo }: {node: any, rfInstance: any, setMenu: any, connectTo: any}) {
+  const { getNode, setNodes, addNodes, setEdges, addEdges } = useReactFlow();
+  const { unselectAll } = useStore(selector);
+  console.log("SingleMenuItem node:", node);
+  return (
+    <div
+      key={node.name}
+      className='rounded-sm text-neutral-300 text-l font-normal capitalize custom-menu-item hover:cursor-pointer select-none flex justify-between'
+      onClick={(evt) => {
+        const nodeKey = node;
+        const flowPosition = rfInstance?.screenToFlowPosition({
+          x: evt.clientX,
+          y: evt.clientY,
+        });
+        console.log(nodeKey)
+        unselectAll();
+
+        const id = Date.now();
+
+        addNodes({
+          ...nodeKey,
+          selected: true,
+          dragging: true,
+          position: flowPosition,
+          id: `${id}`, // Unique ID
+        });
+
+        // connectTo est le connectionState de React Flow
+        // Il contient fromNode.id et fromHandle.id (pas source/sourceHandle)
+        console.log("connectTo:", connectTo);
+        if (connectTo && connectTo.fromNode && connectTo.fromHandle) {
+          addEdges({
+            id: `e${connectTo.fromNode.id}-${id}`,
+            source: connectTo.fromNode.id,
+            sourceHandle: connectTo.fromHandle.id,
+            target: `${id}`,
+            targetHandle: "trigger",
+          } as Edge)
+        }
+
+        setMenu(null);
+        /**Handle Node Addition */
+      }}
+    >
+      <span className='pl-6'>{node.data.label}</span>
     </div>
   );
 }
@@ -176,6 +244,7 @@ export default function ContextMenu({
   reactFlowInstance,
   rfInstance,
   setMenu,
+  connectTo,
   ...props
 }: ContextMenuProps) {
 
@@ -192,6 +261,7 @@ export default function ContextMenu({
                 renderMenu={recursiveMenu}
                 rfInstance={rfInstance}
                 setMenu={setMenu}
+                connectTo={connectTo}
               />
             ))}
           </div>
@@ -199,17 +269,49 @@ export default function ContextMenu({
       </>
     );
   };
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    setSearchMode(true);
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, []);
+  console.log(Object.keys(nodes));
+  console.log();
   return (
     <div
       style={{ top, left, right, bottom }}
       className="z-10 absolute custom-menu p-0.5 flex flex-col gap-1"
+      onWheel={(e) => e.stopPropagation()}
       {...props}
     >
-      <h2 className='text-gray-400 text-l font-medium mx-1.5 mt-0.5 select-none'>Add</h2>
-      <span className='custom-menu-separator pb-1 mx-1.5'></span>
+      {!searchMode && <><h2 className='text-gray-400 text-l font-medium mx-1.5 mt-0.5 select-none'>Add</h2>
+        <span className='custom-menu-separator pb-1 mx-1.5'></span>
 
-      {recursiveMenu(menu)}
+        {recursiveMenu(menu)}</>}
+      {searchMode && <>
+        <h2 className='text-gray-400 text-l font-medium mx-1.5 mt-0.5 select-none'>Search</h2>
+        <div className='mx-1.5 mt-0.5 px-2 py-0.5 border border-neutral-500 rounded flex align-middle'><Search className='mr-2 w-4 h-4 color-neutral-500'></Search> <input type='text' onChange={(evt) => setSearchQuery(evt.target.value)} className='focus:outline-none' autoFocus></input></div>
+        <div 
+          className='max-h-96 overflow-y-auto custom-menu-scroll overscroll-contain'
+          onWheel={(e) => e.stopPropagation()}
+        >{Object.keys(nodes).filter((node: string) => node.toLowerCase().includes(searchQuery.toLowerCase().replace(' ', '_'))).map((nodeKey: string, index: number) => {
+          const node = nodes[nodeKey];
+          return (<SingleMenuItem
+            key={nodeKey}
+            node={node}
+            rfInstance={rfInstance}
+            setMenu={setMenu}
+            connectTo={connectTo}
+          ></SingleMenuItem>)
+        })}</div>
+      </>}
     </div>
   );
 }
