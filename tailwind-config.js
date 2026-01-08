@@ -1,3 +1,4 @@
 tailwind.config = {
   important: true,
+  
 };

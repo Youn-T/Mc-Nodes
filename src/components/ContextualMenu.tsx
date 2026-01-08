@@ -26,10 +26,10 @@ const selector = (state: ReactFlowState) => {
   };
 };
 // Composant séparé pour chaque item de menu
-function MenuItem({ node, renderMenu, rfInstance, setMenu, connectTo }: MenuItemProps) {
+function MenuItem({ node, renderMenu, rfInstance, setMenu, connectTo }: MenuItemProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const hasOptions = node.hasOwnProperty("options");
-  const { getNode, setNodes, addNodes, setEdges, addEdges } = useReactFlow();
+  const { addNodes, addEdges } = useReactFlow();
   const { unselectAll } = useStore(selector);
 
   if (hasOptions) {
@@ -83,9 +83,6 @@ function MenuItem({ node, renderMenu, rfInstance, setMenu, connectTo }: MenuItem
           id: `${id}`, // Unique ID
         });
 
-        // connectTo est le connectionState de React Flow
-        // Il contient fromNode.id et fromHandle.id (pas source/sourceHandle)
-        console.log("connectTo:", connectTo);
         if (connectTo && connectTo.fromNode && connectTo.fromHandle) {
           addEdges({
             id: `e${connectTo.fromNode.id}-${id}`,
@@ -106,10 +103,9 @@ function MenuItem({ node, renderMenu, rfInstance, setMenu, connectTo }: MenuItem
 }
 
 
-function SingleMenuItem({ node, rfInstance, setMenu, connectTo }: {node: any, rfInstance: any, setMenu: any, connectTo: any}) {
-  const { getNode, setNodes, addNodes, setEdges, addEdges } = useReactFlow();
+function SingleMenuItem({ node, rfInstance, setMenu, connectTo }: {node: any, rfInstance: any, setMenu: any, connectTo: any}): JSX.Element {
+  const { addNodes, addEdges } = useReactFlow();
   const { unselectAll } = useStore(selector);
-  console.log("SingleMenuItem node:", node);
   return (
     <div
       key={node.name}
@@ -120,7 +116,6 @@ function SingleMenuItem({ node, rfInstance, setMenu, connectTo }: {node: any, rf
           x: evt.clientX,
           y: evt.clientY,
         });
-        console.log(nodeKey)
         unselectAll();
 
         const id = Date.now();
@@ -133,9 +128,6 @@ function SingleMenuItem({ node, rfInstance, setMenu, connectTo }: {node: any, rf
           id: `${id}`, // Unique ID
         });
 
-        // connectTo est le connectionState de React Flow
-        // Il contient fromNode.id et fromHandle.id (pas source/sourceHandle)
-        console.log("connectTo:", connectTo);
         if (connectTo && connectTo.fromNode && connectTo.fromHandle) {
           addEdges({
             id: `e${connectTo.fromNode.id}-${id}`,
@@ -154,85 +146,6 @@ function SingleMenuItem({ node, rfInstance, setMenu, connectTo }: {node: any, rf
     </div>
   );
 }
-console.log(menu);
-// const menu = [
-//   [
-//     {
-//       name: "Events",
-//       options: [
-//         [
-//           {
-//             name: "Event with Reward",
-//             options: [
-//               [
-//                 { name: "Start Event", node: "..." }
-//               ],
-//               [
-//                 { name: "Give Item", node: ".." }
-//               ]
-//             ]
-//           },
-//           { name: "Start Event", node: "..." }
-//         ],
-//         [
-//           { name: "Start Event", node: "..." }
-//         ]
-//       ]
-//     },
-//     {
-//       name: "Common Events",
-//       options: [
-//         [
-//           { name: "Start Event", node: "..." }
-//         ],
-//         [
-//           { name: "Start Event", node: "..." }
-//         ]
-//       ]
-//     }
-//   ],
-//   [
-//     {
-//       name: "Other Events",
-//       options: [
-//         [
-//           { name: "Start Event", node: "..." }
-//         ],
-//         [
-//           { name: "Start Event", node: "..." }
-//         ]
-//       ]
-//     }
-//   ]
-// ];
-
-// const nodes = {
-//   "...": {
-//     type: 'custom',
-//     data: {
-//       label: 'Start Event',
-//       inputs: [],
-//       outputs: [
-//         { id: 'trigger', label: 'Trigger', type: SocketTypes.TRIGGER },
-//       ],
-//     },
-//   },
-//   "..": {
-//     type: 'custom',
-//     data: {
-//       label: 'Give Item',
-//       inputs: [
-//         { id: 'trigger', label: 'Trigger', type: SocketTypes.TRIGGER },
-//         { id: 'player', label: 'Player', type: SocketTypes.VALUE },
-//         { id: 'item', label: 'Item', type: SocketTypes.VALUE },
-//         { id: 'amount', label: 'Amount', type: SocketTypes.VALUE },
-//       ],
-//       outputs: [
-//         { id: 'success', label: 'Success', type: SocketTypes.VALUE },
-//       ],
-//     }
-//   }
-// }
 
 export default function ContextMenu({
   id,
@@ -272,7 +185,7 @@ export default function ContextMenu({
   const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+  const handleKeyDown = useCallback((_event: KeyboardEvent): void => {
     setSearchMode(true);
   }, []);
 
@@ -281,9 +194,8 @@ export default function ContextMenu({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     }
-  }, []);
-  console.log(Object.keys(nodes));
-  console.log();
+  }, [handleKeyDown]);
+
   return (
     <div
       style={{ top, left, right, bottom }}
@@ -301,7 +213,7 @@ export default function ContextMenu({
         <div 
           className='max-h-96 overflow-y-auto custom-menu-scroll overscroll-contain'
           onWheel={(e) => e.stopPropagation()}
-        >{Object.keys(nodes).filter((node: string) => node.toLowerCase().includes(searchQuery.toLowerCase().replace(' ', '_'))).map((nodeKey: string, index: number) => {
+        >{Object.keys(nodes).filter((node: string) => node.toLowerCase().includes(searchQuery.toLowerCase().replace(' ', '_'))).map((nodeKey: string) => {
           const node = nodes[nodeKey];
           return (<SingleMenuItem
             key={nodeKey}

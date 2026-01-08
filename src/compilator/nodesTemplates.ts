@@ -1,7 +1,8 @@
 export const nodes: Record<string, { template: string, dependencies?: string[], var?: Record<string, string> }> = {
     "block explode": {
         template: "world.afterEvents.blockExplode.subscribe(eventData => {\n /* __NEXT_NODE__ */ });",
-        dependencies: ["world"]
+        dependencies: ["world"],
+        var: { "block": "eventData.block" }
     },
     "button push": {
         template: "world.afterEvents.buttonPush.subscribe(eventData => {\n /* __NEXT_NODE__ */ });",
@@ -23,5 +24,9 @@ export const nodes: Record<string, { template: string, dependencies?: string[], 
     },
     "player send message": {
         template: "/* __player__ */.sendMessage(/* __message__ */);\n",
+    },
+    "block get location": {
+        template: "const /* __VAR1__ */ = /* __block__ */.location;\n",
+        var: { "location": "VAR1" }
     }
 }

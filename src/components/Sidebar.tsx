@@ -8,17 +8,10 @@ interface SidebarProps {
 export default function Sidebar({ nodes = [], edges = [] }: SidebarProps) {
   const [generated, setGenerated] = useState('');
 
-  const generateCode = () => {
-    // try {
-      const payload = { nodes: nodes, connections: edges };
-
-      const compilator = new Compilator(payload as any);
-
-
-      setGenerated(compilator.compile() );
-    // } catch (e) {
-      // setGenerated(`// Erreur lors de la génération ${e}`);
-    // }
+  const generateCode = (): void => {
+    const payload = { nodes: nodes, connections: edges };
+    const compilator = new Compilator(payload as any);
+    setGenerated(compilator.compile());
   };
 
 
@@ -40,24 +33,6 @@ export default function Sidebar({ nodes = [], edges = [] }: SidebarProps) {
         onFocus={() => { if (!generated) generateCode(); }}
         style={{ flex: 1, width: '100%', minHeight: 200, background: '#1A1A1A', color: '#dbeafe', padding: 8, border: '1px solid rgba(255,255,255,0.04)' }}
       />
-
-      {/* {tab === 'export' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-
-        </div>
-      )} */}
-
-      {/* {tab === 'code' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-          <div style={{ fontSize: 13, opacity: 0.9 }}>Code généré</div>
-
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={copyCode} style={{ padding: '8px' }}>Copier</button>
-            <button onClick={downloadPack} style={{ padding: '8px' }}>Télécharger</button>
-          </div>
-        </div>
-      )} */}
-
     </aside>
   );
 }
