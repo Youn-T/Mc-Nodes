@@ -64,7 +64,10 @@ export async function GenerateData(files: Record<string, { blob: Blob, url: stri
             if (fileName.includes('/entity/') && (fileName.endsWith('.json'))) {
                 try {
                     const entityId = JSON.parse(await files[fileName].blob.text())["minecraft:client_entity"].description.identifier;
-                    data.explorer.entities[entityId] = { res: { name: fileName, url: files[fileName].url, blob: files[fileName].blob } };
+
+                    if (!data.explorer.entities[entityId]) data.explorer.entities[entityId] = {};
+
+                    data.explorer.entities[entityId]["res"] = { name: fileName, url: files[fileName].url, blob: files[fileName].blob };
                 } catch {
                     // Failed to parse entity file
                 }
@@ -75,7 +78,9 @@ export async function GenerateData(files: Record<string, { blob: Blob, url: stri
             if (fileName.includes('/entities/') && (fileName.endsWith('.json'))) {
                 try {
                     const entityId = JSON.parse(await files[fileName].blob.text())["minecraft:entity"].description.identifier;
-                    data.explorer.entities[entityId] = { bev: { name: fileName, url: files[fileName].url, blob: files[fileName].blob } , ...data.explorer.entities[entityId]};
+                    if (!data.explorer.entities[entityId]) data.explorer.entities[entityId] = {};
+
+                    data.explorer.entities[entityId]["bev"] = { name: fileName, url: files[fileName].url, blob: files[fileName].blob };
                 } catch {
                     // Failed to parse entity file
                 }
