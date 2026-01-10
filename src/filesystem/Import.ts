@@ -11,8 +11,21 @@ export async function ImportFiles(files: File[]): Promise<Record<string, { blob:
             for (const zippedName of Object.keys(unzipped.files)) {
                 const zippedFile = unzipped.files[zippedName];
                 if (!zippedFile.dir) {
-                    const blob = await zippedFile.async('blob');
-                    filesMap[zippedName] = { blob, url: URL.createObjectURL(blob) };
+
+
+                    if (zippedName.endsWith('.mcpack')) {
+
+                        const unzippedMcpack = await zip.loadAsync(await zippedFile.async('arraybuffer'));
+
+                        for (const nestedZippedName of Object.keys(unzippedMcpack.files)) {
+                            const nestedZippedFile = unzippedMcpack.files[nestedZippedName];
+                            const nestedBlob = await nestedZippedFile.async('blob');
+                            filesMap[zippedName.replace('.mcpack', '') + '/' + nestedZippedName] = { blob: nestedBlob, url: URL.createObjectURL(nestedBlob) };
+                        }
+                    } else {
+                        const blob = await zippedFile.async('blob');
+                        filesMap[zippedName] = { blob, url: URL.createObjectURL(blob) };
+                    }
                 }
             }
         } else {
@@ -26,7 +39,7 @@ export async function ImportFiles(files: File[]): Promise<Record<string, { blob:
 
 export async function GenerateData(files: Record<string, { blob: Blob, url: string }>): Promise<{ explorer: explorerData, browser: browserData }> {
     const data: { explorer: explorerData, browser: browserData } = { explorer: { entities: {}, blocks: {}, items: {}, scripts: {} }, browser: { textures: [], models: [], audio: [] } };
-
+    console.log('Generating data from files:', files);
     const constRootDirs = new Set(Object.keys(files).map(fileName => fileName.split('/')[0]));
     let detectedResourcePack: string = "";
     let detectedBehaviorPack: string = "";
@@ -34,6 +47,7 @@ export async function GenerateData(files: Record<string, { blob: Blob, url: stri
     for (const rootDir of constRootDirs) {
         if (Object.prototype.hasOwnProperty.call(files, `${rootDir}/manifest.json`)) {
             const manifestContent = await files[`${rootDir}/manifest.json`].blob.text();
+            console.log('Parsing manifest for rootDir:', rootDir, manifestContent);
             const manifest = JSON.parse(manifestContent);
             if (manifest?.modules?.find((mod: { type: string }) => mod.type === 'resources')) {
                 detectedResourcePack = rootDir;
