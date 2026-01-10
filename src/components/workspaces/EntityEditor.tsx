@@ -56,28 +56,51 @@ function EntityEditor({ asset }: { asset: { res?: { name: string, url: string, b
                 const resText = resBlob ? await resBlob.text() : "{}";
                 const behText = behBlob ? await behBlob.text() : "{}";
 
+                // Parse locally pour éviter d'utiliser des états stale et relancer l'effet inutilement
+                let parsedRes: Record<string, any> = {};
+                let parsedBeh: Record<string, any> = {};
+                try {
+                    parsedRes = JSON.parse(resText.replace(/\/\*.+?\*\/|\/\/.*(?=[\n\r])/g, '') || "{}");
+                } catch (e) {
+                    parsedRes = {};
+                }
+                try {
+                    parsedBeh = JSON.parse(behText.replace(/\/\*.+?\*\/|\/\/.*(?=[\n\r])/g, '') || "{}");
+                } catch (e) {
+                    parsedBeh = {};
+                }
+
                 if (!mounted) return;
-                setResContent(JSON.parse(resText.replace(/\/\*.+?\*\/|\/\/.*(?=[\n\r])/g, '') || "{}"));
-                setBehContent(JSON.parse(behText.replace(/\/\*.+?\*\/|\/\/.*(?=[\n\r])/g, '') || "{}"));
 
-                setEntityData(behContent["minecraft:entity"] || {});
-                setClientData(resContent["minecraft:client_entity"] || {});
+                // Mettre à jour les states à partir des parsed locaux
+                setResContent(parsedRes);
+                setBehContent(parsedBeh);
 
-                setName((clientData?.description?.identifier || entityData?.description?.identifier || "Unnamed Entity")?.split(":")?.[1]?.split("_")?.join(" ") || "");
-                setIdentifier(entityData?.description?.identifier || clientData?.description?.identifier || "");
-                setComponents(entityData?.components || {});
-                setComponentGroups(entityData?.component_groups || {});
-                setEvents(entityData?.events || {});
+                const parsedEntity = parsedBeh["minecraft:entity"] || {};
+                const parsedClient = parsedRes["minecraft:client_entity"] || {};
 
-                console.log('Loaded entity data:', { resContent, behContent, entityData, clientData });
-            } catch {
-                console.log('Error loading entity data');
-                // Failed parsing blobs
+                setEntityData(parsedEntity);
+                setClientData(parsedClient);
+
+                const derivedIdentifier = parsedEntity?.description?.identifier || parsedClient?.description?.identifier || "";
+                setIdentifier(derivedIdentifier);
+
+                const derivedName = (parsedClient?.description?.identifier || parsedEntity?.description?.identifier || "Unnamed Entity")
+                    ?.split(":")?.[1]?.split("_")?.join(" ") || "";
+                setName(derivedName);
+
+                setComponents(parsedEntity?.components || {});
+                setComponentGroups(parsedEntity?.component_groups || {});
+                setEvents(parsedEntity?.events || {});
+
+                // console.log('Loaded entity data:', { parsedRes, parsedBeh, parsedEntity, parsedClient });
+            } catch (err) {
+                console.log('Error loading entity data', err);
             }
         }
         load();
         return () => { mounted = false; };
-    }, [asset, resContent, behContent, entityData, clientData]);
+    }, [asset]);
 
     // const name = (clientData?.description?.identifier || entityData?.description?.identifier || "Unnamed Entity")?.split(":")?.[1]?.split("_")?.join(" ");
     // const identifier = entityData?.description?.identifier || clientData?.description?.identifier || "";
