@@ -24,9 +24,9 @@ const browserIcons = {
 
 export interface explorerData {
     entities: Record<string, { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }>,
-    blocks: any[],
-    items: any[],
-    scripts: any[],
+    blocks: Record<string, { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }>,
+    items: Record<string, { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }>,
+    scripts: Record<string, { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }>,
 }
 
 export interface browserData {
@@ -55,6 +55,8 @@ function Navbar({
         models: false,
         audio: false,
     });
+    
+    const [currentItem, setCurrentItem] = useState<{name: string, tab: string} | null>(null);
 
     const [customNamespaceEnabled, setCustomNamespaceEnabled] = useState(false);
     const [webSiteEnabled, setWebSiteEnabled] = useState(false);
@@ -68,18 +70,26 @@ function Navbar({
 
     return (
         <div className='w-100 h-full flex border-r border-neutral-700'>
-            <div className='bg-[#444444] w-15 h-full flex flex-col pt-4 items-center gap-y-6 border-r border-neutral-600'>
+            {/* Sidebar Icons */}
+            <div className='bg-neutral-800 w-15 h-full flex flex-col pt-4 items-center gap-y-6 border-r border-neutral-600'>
                 {tabs.map((tab) =>
-                    <tab.icon key={tab.name} className={`w-8 h-8 ${currentTab === tab.name ? 'text-neutral-200' : 'text-neutral-500'} hover:text-neutral-200`} onClick={() => { setCurrentTab(tab.name); }} />
+                    <tab.icon key={tab.name} className={`w-7.5 h-7.5 ${currentTab === tab.name ? 'text-neutral-300' : 'text-neutral-500'} hover:text-neutral-200`} onClick={() => { setCurrentTab(tab.name); }} />
                 )}
 
             </div>
-            <div className=' w-full h-full bg-[#252526] overflow-y-auto custom-scrollbar'>
-                <div className="capitalize font-semibold p-2 pb-1 bg-[#444444] border-b border-neutral-600 sticky top-0">{currentTab}</div>
+            {/* Sidebar Content */}
+            <div className=' w-full h-full bg-neutral-900 overflow-y-auto custom-scrollbar'>
+                {/* Sidebar Content Header */}
+                <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-700 sticky top-0 bg-neutral-800">
+                    <h2 className="capitalize font-bold text-lg">{currentTab}</h2>
+                </div>
+
+
+
                 {currentTab === 'explorer' && Object.keys(data.explorer).map((key) => {
                     return (
                         <div className="" key={key}>
-                            <div className="bg-[#333333] w-full h-6 border-y border-neutral-700 capitalize px-2 text-sm flex select-none cursor-pointer "
+                            <div className="bg-neutral-800 w-full h-6 border-y border-neutral-700 uppercase px-2 text-xs flex select-none cursor-pointer text-neutral-400 font-bold items-center "    
                                 onClick={() => setExplorerTabs({ ...explorerTabs, [key]: !explorerTabs[key] })}
                             >
                                 {/* Chevron rotation : rotate-0 quand fermé, -rotate-90 quand ouvert */}
@@ -93,7 +103,7 @@ function Navbar({
                                     {
                                         Object.keys(data.explorer[key as keyof typeof data.explorer]).map((item: any, index: number) => {
 
-                                            return (<div key={index} className="pl-8 text-sm capitalize py-0.5 hover:bg-[#333333] select-none" onClick={() => onItemSelect?.({ tab: currentTab, section: key, item: data.explorer[key as keyof typeof data.explorer][item], index })}> {item.split(":")[1].split("_").join(" ")/*.name?.split('/')?.pop()*/}</div>)
+                                            return (<div key={index} className={`pl-8 text-sm capitalize py-0.5 hover:bg-neutral-700/75 select-none text-sm font-medium ${ currentItem?.name === item && currentItem?.tab === currentTab ? 'bg-neutral-700' : '' }`} onClick={() => {setCurrentItem({name: item, tab: currentTab});onItemSelect?.({ tab: currentTab, section: key, item: data.explorer[key as keyof typeof data.explorer]?.[item], index })}}> {item.split(":")[1].split("_").join(" ")/*.name?.split('/')?.pop()*/}</div>)
                                         })
                                     }
                                 </div>
@@ -105,7 +115,7 @@ function Navbar({
                 {currentTab === 'content browser' && Object.keys(data.browser).map((key) => {
                     return (
                         <div className="" key={key}>
-                            <div className="bg-[#333333] w-full h-6 border-y border-neutral-700 capitalize px-2 text-sm flex select-none cursor-pointer "
+                            <div className="bg-neutral-800 w-full h-6 border-y border-neutral-700 uppercase px-2 text-xs flex select-none cursor-pointer text-neutral-400 font-bold items-center "
                                 onClick={() => setBrowserTabs({ ...browserTabs, [key]: !browserTabs[key] })}
                             >
                                 {/* Chevron rotation : rotate-0 quand fermé, -rotate-90 quand ouvert */}
@@ -119,7 +129,7 @@ function Navbar({
                                     {
                                         data.browser[key as keyof typeof data.browser].map((item: any, index: number) => {
                                             const Icon = browserIcons[key as keyof typeof browserIcons];
-                                            return (<div key={index} className="pl-4 text-sm capitalize py-0.5 hover:bg-[#333333] flex items-center select-none" onClick={() => onItemSelect?.({ tab: currentTab, section: key, item, index })}><Icon className="w-4 h-4 mr-1" /> {item.name.split('/').pop()}</div>)
+                                            return (<div key={index} className={`flex items-center pl-8 text-sm capitalize py-0.5 hover:bg-neutral-700/75 select-none text-sm font-medium ${ currentItem?.name === item && currentItem?.tab === currentTab ? 'bg-neutral-700' : '' }`} onClick={() => {setCurrentItem({name: item, tab: currentTab});onItemSelect?.({ tab: currentTab, section: key, item, index })}}><Icon className="w-4 h-4 mr-1" /> {item.name.split('/').pop()}</div>)
                                         })
                                     }
                                 </div>

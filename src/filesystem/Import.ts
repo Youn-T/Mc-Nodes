@@ -20,12 +20,12 @@ export async function ImportFiles(files: File[]): Promise<Record<string, { blob:
             filesMap[file.name] = { blob: file, url: URL.createObjectURL(file) };
         }
     }
-
+    console.log('Imported files:', filesMap, Object.keys(filesMap).length);
     return filesMap;
 }
 
 export async function GenerateData(files: Record<string, { blob: Blob, url: string }>): Promise<{ explorer: explorerData, browser: browserData }> {
-    const data: { explorer: explorerData, browser: browserData } = { explorer: { entities: {}, blocks: [], items: [], scripts: [] }, browser: { textures: [], models: [], audio: [] } };
+    const data: { explorer: explorerData, browser: browserData } = { explorer: { entities: {}, blocks: {}, items: {}, scripts: {} }, browser: { textures: [], models: [], audio: [] } };
 
     const constRootDirs = new Set(Object.keys(files).map(fileName => fileName.split('/')[0]));
     let detectedResourcePack: string = "";
@@ -43,10 +43,11 @@ export async function GenerateData(files: Record<string, { blob: Blob, url: stri
             }
         }
     }
-
+    console.log(Object.keys(files).length, 'files detected. Resource Pack:', detectedResourcePack, 'Behavior Pack:', detectedBehaviorPack);
     for (const fileName of Object.keys(files)) {
         const isInResourcePack = detectedResourcePack !== "" && fileName.startsWith(detectedResourcePack + '/');
         const isInBehaviorPack = detectedBehaviorPack !== "" && fileName.startsWith(detectedBehaviorPack + '/');
+        // console.log('Processing file:', fileName, 'isInResourcePack:', isInResourcePack, 'isInBehaviorPack:', isInBehaviorPack);
 
         if (isInResourcePack) {
             if (fileName.includes('/sounds/') && (fileName.endsWith('.ogg') || fileName.endsWith('.mp3') || fileName.endsWith('.wav'))) {
@@ -77,11 +78,14 @@ export async function GenerateData(files: Record<string, { blob: Blob, url: stri
         if (isInBehaviorPack) {
             if (fileName.includes('/entities/') && (fileName.endsWith('.json'))) {
                 try {
-                    const entityId = JSON.parse(await files[fileName].blob.text())["minecraft:entity"].description.identifier;
+                    const text = (await files[fileName].blob.text()).replace(/\/\*.+?\*\/|\/\/.*(?=[\n\r])/g, '');
+                    console.log('Parsing entity file:', fileName, text);
+                    const entityId = JSON.parse(text)["minecraft:entity"].description.identifier;
                     if (!data.explorer.entities[entityId]) data.explorer.entities[entityId] = {};
 
                     data.explorer.entities[entityId]["bev"] = { name: fileName, url: files[fileName].url, blob: files[fileName].blob };
-                } catch {
+                } catch (e) {
+                    console.log('Failed to parse entity file:', fileName, e);
                     // Failed to parse entity file
                 }
             }

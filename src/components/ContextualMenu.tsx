@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { JSX, useCallback, useEffect, useState } from 'react';
 import { Edge, ReactFlowState, useReactFlow, useStore } from '@xyflow/react';
 import { menu, nodes } from '../nodes/nodes';
 import { Search } from 'lucide-react';

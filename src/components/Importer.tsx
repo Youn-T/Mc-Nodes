@@ -2,7 +2,7 @@ import { useDropzone } from 'react-dropzone';
 
 import { useCallback } from 'react';
 
-import {ImportFiles, GenerateData} from '../filesystem/import';
+import {ImportFiles, GenerateData} from '../filesystem/Import';
 import { explorerData, browserData } from './Navbar';
 
 function Importer({onDataImport}: {onDataImport: (importedData: { explorer: explorerData, browser: browserData },importedFiles: Record<string, {blob: Blob, url: string}>) => void}) {

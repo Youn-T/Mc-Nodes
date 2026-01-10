@@ -516,7 +516,8 @@ function FlowGraph() {
   const onNodeClick = useCallback(() => setMenu(null), [setMenu]);
   const onNodeDragStart = useCallback(() => setMenu(null), [setMenu]);
 
-  const onConnectEnd = useCallback((event: MouseEvent, connectionState: any): void => {
+  const onConnectEnd = useCallback((event: MouseEvent | TouchEvent, connectionState: any): void => {
+    if (event instanceof TouchEvent) return;
     const pane = flowWrapper.current?.getBoundingClientRect();
     if (connectionState.toNode) return;
     if (!pane) return;

@@ -37,6 +37,15 @@ function EntityEditor({ asset }: { asset: { res?: { name: string, url: string, b
     const [activeTab, setActiveTab] = useState<Tab>("settings");
     const [openComponents, setOpenComponents] = useState<Set<string>>(new Set());
 
+    const [clientData, setClientData] = useState<any>({});
+    const [entityData, setEntityData] = useState<any>({});
+
+    const [name, setName] = useState<string>("");
+    const [identifier, setIdentifier] = useState<string>("");
+    const [components, setComponents] = useState<Record<string, any>>({});
+    const [componentGroups, setComponentGroups] = useState<Record<string, any>>({});
+    const [events, setEvents] = useState<Record<string, any>>({});
+
     useEffect(() => {
         let mounted = true;
         async function load() {
@@ -48,23 +57,34 @@ function EntityEditor({ asset }: { asset: { res?: { name: string, url: string, b
                 const behText = behBlob ? await behBlob.text() : "{}";
 
                 if (!mounted) return;
-                setResContent(JSON.parse(resText || "{}"));
-                setBehContent(JSON.parse(behText || "{}"));
+                setResContent(JSON.parse(resText.replace(/\/\*.+?\*\/|\/\/.*(?=[\n\r])/g, '') || "{}"));
+                setBehContent(JSON.parse(behText.replace(/\/\*.+?\*\/|\/\/.*(?=[\n\r])/g, '') || "{}"));
+
+                setEntityData(behContent["minecraft:entity"] || {});
+                setClientData(resContent["minecraft:client_entity"] || {});
+
+                setName((clientData?.description?.identifier || entityData?.description?.identifier || "Unnamed Entity")?.split(":")?.[1]?.split("_")?.join(" ") || "");
+                setIdentifier(entityData?.description?.identifier || clientData?.description?.identifier || "");
+                setComponents(entityData?.components || {});
+                setComponentGroups(entityData?.component_groups || {});
+                setEvents(entityData?.events || {});
+
+                console.log('Loaded entity data:', { resContent, behContent, entityData, clientData });
             } catch {
+                console.log('Error loading entity data');
                 // Failed parsing blobs
             }
         }
         load();
         return () => { mounted = false; };
-    }, [asset]);
+    }, [asset, resContent, behContent, entityData, clientData]);
 
-    const entityData = behContent["minecraft:entity"] || {};
-    const clientData = resContent["minecraft:client_entity"] || {};
-    const name = (clientData?.description?.identifier || entityData?.description?.identifier || "Unnamed Entity")?.split(":")?.[1]?.split("_")?.join(" ");
-    const identifier = entityData?.description?.identifier || clientData?.description?.identifier || "";
-    const components = entityData?.components || {};
-    const componentGroups = entityData?.component_groups || {};
-    const events = entityData?.events || {};
+    // const name = (clientData?.description?.identifier || entityData?.description?.identifier || "Unnamed Entity")?.split(":")?.[1]?.split("_")?.join(" ");
+    // const identifier = entityData?.description?.identifier || clientData?.description?.identifier || "";
+    // const components = entityData?.components || {};
+    // console.log('Components:', components);
+    // const componentGroups = entityData?.component_groups || {};
+    // const events = entityData?.events || {};
 
     const toggleComponent = (key: string) => {
         setOpenComponents(prev => {
@@ -87,8 +107,8 @@ function EntityEditor({ asset }: { asset: { res?: { name: string, url: string, b
             <div className="bg-neutral-800 border-b border-neutral-700">
                 <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-700">
                     <div>
-                        <h1 className="capitalize font-bold text-lg">{name}</h1>
-                        <span className="text-xs text-neutral-400 font-mono">{identifier}</span>
+                        <h2 className="capitalize font-bold text-lg">{name}</h2>
+                        {/* <span className="text-xs text-neutral-400 font-mono">{identifier}</span> */}
                     </div>
                     <div className="flex gap-2 text-xs">
                         <span className="bg-green-900/50 text-green-400 px-2 py-0.5 rounded">
@@ -206,7 +226,7 @@ function EntityEditor({ asset }: { asset: { res?: { name: string, url: string, b
                                         <div className="w-8 h-8 bg-neutral-600 rounded flex-shrink-0" />
                                         <div className="flex-1 min-w-0">
                                             <div className="text-xs text-neutral-400">{key}</div>
-                                            <div className="text-sm truncate">{String(value).split("/").pop()}</div>
+                                            <div className="text-sm truncate ">{String(value).split("/").pop()}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -253,18 +273,18 @@ function EntityEditor({ asset }: { asset: { res?: { name: string, url: string, b
                                         type="text" 
                                         value={identifier}
                                         readOnly
-                                        className="w-full bg-neutral-700 border border-neutral-600 rounded px-2 py-1.5 text-sm"
+                                        className="w-full bg-neutral-700 border border-neutral-600 rounded px-2 py-1.5 text-sm focus:outline-none"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="flex items-center justify-between bg-neutral-700 rounded px-3 py-2">
                                         <span className="text-sm">Spawnable</span>
-                                        <input type="checkbox" checked={!!entityData?.description?.is_spawnable} readOnly className="accent-blue-500" />
+                                        <input type="checkbox" checked={!!entityData?.description?.is_spawnable} readOnly className="accent-blue-500 focus:outline-none" />
                                     </div>
                                     <div className="flex items-center justify-between bg-neutral-700 rounded px-3 py-2">
                                         <span className="text-sm">Summonable</span>
-                                        <input type="checkbox" checked={!!entityData?.description?.is_summonable} readOnly className="accent-blue-500" />
+                                        <input type="checkbox" checked={!!entityData?.description?.is_summonable} readOnly className="accent-blue-500 focus:outline-none" />
                                     </div>
                                 </div>
 
@@ -274,7 +294,7 @@ function EntityEditor({ asset }: { asset: { res?: { name: string, url: string, b
                                         type="text" 
                                         value={behContent?.format_version || "1.21.0"}
                                         readOnly
-                                        className="w-full bg-neutral-700 border border-neutral-600 rounded px-2 py-1.5 text-sm"
+                                        className="w-full bg-neutral-700 border border-neutral-600 rounded px-2 py-1.5 text-sm focus:outline-none"
                                     />
                                 </div>
                             </div>
