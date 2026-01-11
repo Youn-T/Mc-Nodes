@@ -30,8 +30,8 @@ function FlowContent() {
   return (
     <div style={{ width: '100vw', height: '100vh' }} className='flex select-none'>
       {data !== null && <><Navbar data={data} onItemSelect={handleItemSelect} />
-        <Workspace selected={selected}></Workspace></>}
-      {data === null && <Importer onDataImport={handleDataImport}></Importer>}
+        <Workspace selected={selected} data={data}></Workspace></>}
+      {data === null && <Importer onDataImport={handleDataImport} ></Importer>}
       {/* {selected?.tab === 'explorer' && <FlowGraph />} */}
 
 

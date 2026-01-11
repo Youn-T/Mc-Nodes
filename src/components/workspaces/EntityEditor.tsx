@@ -1,11 +1,19 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, Eye, EyeOff, Workflow, Box, Settings, Plus, Trash2 } from "lucide-react";
-import { compileEntity, EntityData, minecraftComponents, parseComponentGroups, parseComponents, parseEvents } from "../../editors/entityEditor";
+import {  EntityData, minecraftComponents, parseComponentGroups, parseComponents, parseEvents } from "../../editors/entityEditor";
+import { BasicSelector } from "../utils/BasicSelector";
+
+import { explorerData, browserData } from '../Navbar';
 
 type Tab = "events" | "visuals" | "settings";
 
+const alphabeticalSort = (values: string[]) => values.sort((a: string, b: string) => a.localeCompare(b));
+
+
+
+
 // Composant pour un item de component (style Blender)
-function ComponentItem({ name, isOpen, onToggle, children, componentData, onValuesChange }: { name: string; isOpen: boolean; onToggle: () => void; children?: React.ReactNode; componentData: any, onValuesChange: (newValues: any) => void }) {
+function ComponentItem({ name, isOpen, onToggle, componentData, onValuesChange }: { name: string; isOpen: boolean; onToggle: () => void; componentData: any, onValuesChange: (newValues: any) => void }) {
     const [enabled, setEnabled] = useState(true);
 
     const [values, setValues] = useState<Record<string, any>>(componentData);
@@ -38,7 +46,7 @@ function ComponentItem({ name, isOpen, onToggle, children, componentData, onValu
                                             type="text"
                                             onChange={(e) => {
                                                 // if (e.target.value === "") return;
-                                                setValues(prev => ({ ...prev, [input.name]:  e.target.value === '' ? '' : parseInt(e.target.value) }));
+                                                setValues(prev => ({ ...prev, [input.name]: e.target.value === '' ? '' : parseInt(e.target.value) }));
                                                 onValuesChange({ ...values, [input.name]: parseInt(e.target.value) });
                                             }}
                                             onBlur={(e) => {
@@ -72,14 +80,59 @@ function ComponentItem({ name, isOpen, onToggle, children, componentData, onValu
     );
 }
 
-function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }, onChange: (data: { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }) => void }) {
-    const [resContent, setResContent] = useState<Record<string, any>>({});
-    const [behContent, setBehContent] = useState<Record<string, any>>({});
+function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }, onChange: (data: { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }) => void, data: { explorer: explorerData, browser: browserData } }) {
+    // const [resContent, setResContent] = useState<Record<string, any>>({});
+    // const [behContent, setBehContent] = useState<Record<string, any>>({});
     const [activeTab, setActiveTab] = useState<Tab>("settings");
     const [openComponents, setOpenComponents] = useState<Set<string>>(new Set());
 
     const [clientData, setClientData] = useState<any>({});
     const [entityData, setEntityData] = useState<any>({});
+
+    onChange(asset); // TODO : remove this ; )
+
+    // Pré-calcul des options de géométrie à partir des models (évite 'await' dans le JSX)
+    const [modelGeometryOptions, setModelGeometryOptions] = useState<string[]>([]);
+    useEffect(() => {
+        let mounted = true;
+        async function loadModelOptions() {
+            try {
+                const models = data?.browser?.models || [];
+                const opts: string[] = [];
+                models.forEach(async (model: any) => {
+                    try {
+                        const blob: Blob = model.blob as Blob;
+                        const text = await blob.text();
+                        console.log(text);
+                        const json = JSON.parse(text);
+                        json["minecraft:geometry"].forEach((element: any) => {
+                            opts.push(element.description.identifier.replace("geometry.", ""));
+                        });
+                    } catch {
+                        return "unknown";
+                    }
+                });
+
+
+                // await Promise.all(models.map(async (model: any) => {
+                //     try {
+                //         const blob: Blob = model.blob as Blob;
+                //         const text = await blob.text();
+                //         console.log(text);
+                //         const json = JSON.parse(text);
+                //         return (json["minecraft:geometry"]?.description?.identifier) || "unknown";
+                //     } catch {
+                //         return "unknown";
+                //     }
+                // }));
+                if (mounted) setModelGeometryOptions(opts);
+            } catch {
+                if (mounted) setModelGeometryOptions([]);
+            }
+        }
+        loadModelOptions();
+        return () => { mounted = false; };
+    }, [data?.browser?.models]);
 
     const name = () => userEntityData.identifier?.split(":")?.[1]?.split("_")?.join(" ") || "";
 
@@ -127,8 +180,8 @@ function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url:
                 if (!mounted) return;
 
                 // Mettre à jour les states à partir des parsed locaux
-                setResContent(parsedRes);
-                setBehContent(parsedBeh);
+                // setResContent(parsedRes);
+                // setBehContent(parsedBeh);
 
                 const parsedEntity = parsedBeh["minecraft:entity"] || {};
                 const parsedClient = parsedRes["minecraft:client_entity"] || {};
@@ -177,6 +230,8 @@ function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url:
         { id: "events", label: "Events & Logic", icon: <Workflow size={16} /> },
         { id: "visuals", label: "Visuals", icon: <Box size={16} /> },
     ];
+
+    const [geometryNames, setGeometryNames] = useState<Record<string, any>>({});
 
     return (
         <div className="flex-1 bg-neutral-900 flex flex-col h-full overflow-hidden">
@@ -266,7 +321,7 @@ function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url:
 
                 {/* TAB: Visuals */}
                 {activeTab === "visuals" && (
-                    <div className="h-full flex">
+                    <div className="h-full flex ">
                         {/* 3D Preview */}
                         <div className="flex-1 bg-neutral-950 flex items-center justify-center relative">
                             <div className="text-neutral-600 text-center">
@@ -282,12 +337,75 @@ function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url:
                         </div>
 
                         {/* Sidebar: Materials, Textures, etc. */}
-                        <div className="w-80 bg-neutral-800 border-l border-neutral-700 overflow-y-auto">
+                        <div className="w-80 bg-neutral-800 border-l border-neutral-700 overflow-y-auto custom-scrollbar">
                             {/* Geometry */}
                             <div className="p-3 border-b border-neutral-700">
-                                <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Geometry</div>
-                                <div className="bg-neutral-700 rounded p-2 text-sm">
-                                    <div className="text-neutral-300">{clientData?.description?.geometry?.default || "geometry.unknown"}</div>
+                                <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2 flex items-center justify-between ">Geometry <Plus className="w-4 h-4 font-bold" onClick={(e) => {
+                                    e.stopPropagation();
+                                    console.trace()
+                                    console.log('Adding new geometry entry');
+
+                                    const next = { ...clientData };
+                                    let keyIdx = 1;
+                                    while (next.description.geometry.hasOwnProperty("new_geometry_" + keyIdx)) { keyIdx++; }
+                                    console.log(next)
+                                    next.description.geometry["new_geometry_" + keyIdx] = modelGeometryOptions[0] || "geometry.unknown";
+                                    // next.description.geometry["new_geometry_" + keyIdx] = ;
+
+
+                                    setClientData(next);
+                                }}></Plus></div>
+                                <div className="flex flex-col gap-2">
+                                    {
+                                        Object.keys(clientData?.description?.geometry || {}).map((key: string) => {
+                                            return (
+                                                <div className="bg-neutral-700 rounded px-2 pb-2 text-sm pt-1" key={key}>
+                                                    <input className="text-xs text-neutral-400 border-none outline-none mb-2" value={geometryNames[key] === undefined ? key : geometryNames[key]}
+                                                        spellCheck={false}
+                                                        onChange={(e) =>
+                                                            setGeometryNames(prev => ({ ...prev, [key]: e.target.value }))
+                                                        }
+
+                                                        onBlur={() => {
+                                                            const newKey = geometryNames[key] || key;
+                                                            setGeometryNames(prev => {
+                                                                const next = { ...prev };
+                                                                delete next[key];
+                                                                return next;
+                                                            });
+                                                            setClientData((prev: any) => {
+                                                                const next = { ...prev };
+                                                                const geom = next.description?.geometry || {};
+                                                                if (geom[key] === undefined) return next;
+                                                                if (newKey === key) return next;
+
+                                                                const replaceKeyPreserveOrder = (obj: Record<string, any>, oldK: string, newK: string) => {
+                                                                    if (!Object.prototype.hasOwnProperty.call(obj, oldK)) return obj;
+                                                                    const entries = Object.entries(obj);
+                                                                    const newEntries = entries.map(([k, v]) => k === oldK ? [newK, v] : [k, v]);
+                                                                    const res: Record<string, any> = {};
+                                                                    newEntries.forEach(([k, v]) => { res[k] = v; });
+                                                                    return res;
+                                                                };
+
+                                                                next.description = { ...next.description, geometry: replaceKeyPreserveOrder(geom, key, newKey) };
+                                                                return next;
+                                                            });
+                                                        }} />
+                                                    <BasicSelector options={alphabeticalSort(modelGeometryOptions)} value={clientData?.description?.geometry?.[key].replace("geometry.", "") || ""} onChange={(newValue: any) => {
+                                                        setClientData((prev: any) => {
+                                                            const next = { ...prev };
+                                                            next.description.geometry[key] = newValue;
+                                                            return next;
+                                                        });
+                                                    }} />
+                                                    {/* <div className="text-sm truncate" onClick={() => {}}>{clientData?.description?.geometry?.[key] || "geometry.unknown"}</div> */}
+
+                                                    {/* <div className="text-neutral-300">{}</div> */}
+                                                </div>
+                                            )
+                                        })
+                                    }
                                 </div>
                             </div>
 
@@ -311,11 +429,11 @@ function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url:
                             {/* Render Controllers */}
                             <div className="p-3 border-b border-neutral-700">
                                 <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Render Controllers</div>
-                                {(clientData?.description?.render_controllers || []).map((rc: string, i: number) => (
+                                {/* {(clientData?.description?.render_controllers || []).map((rc: string, i: number) => (
                                     <div key={i} className="text-sm px-2 py-1.5 bg-neutral-700 rounded mb-1 truncate">
                                         {rc}
                                     </div>
-                                ))}
+                                ))} */}
                             </div>
 
                             {/* Animations */}
@@ -358,19 +476,19 @@ function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url:
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="flex items-center justify-between bg-neutral-700 rounded px-3 py-2">
                                         <span className="text-sm">Spawnable</span>
-                                        <input type="checkbox" checked={!!userEntityData?.isSpawnable}  
-                                        onChange={(e) => {
-                                            setUserEntityData(prev => ({ ...prev, isSpawnable: e.target.checked }));
-                                        }}
-                                        className="accent-blue-500 focus:outline-none" />
+                                        <input type="checkbox" checked={!!userEntityData?.isSpawnable}
+                                            onChange={(e) => {
+                                                setUserEntityData(prev => ({ ...prev, isSpawnable: e.target.checked }));
+                                            }}
+                                            className="accent-blue-500 focus:outline-none" />
                                     </div>
                                     <div className="flex items-center justify-between bg-neutral-700 rounded px-3 py-2">
                                         <span className="text-sm">Summonable</span>
-                                        <input type="checkbox" checked={!!userEntityData?.isSummonable} 
-                                        onChange={(e) => {
-                                            setUserEntityData(prev => ({ ...prev, isSummonable: e.target.checked }));
-                                        }}
-                                        className="accent-blue-500 focus:outline-none" />
+                                        <input type="checkbox" checked={!!userEntityData?.isSummonable}
+                                            onChange={(e) => {
+                                                setUserEntityData(prev => ({ ...prev, isSummonable: e.target.checked }));
+                                            }}
+                                            className="accent-blue-500 focus:outline-none" />
                                     </div>
                                 </div>
 

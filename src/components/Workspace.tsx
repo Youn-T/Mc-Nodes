@@ -3,8 +3,9 @@ import EntityEditor from './workspaces/EntityEditor';
 import ImagePreview from './workspaces/ImagePreview';
 import ModelPreview from './workspaces/ModelPreview';
 
+import { explorerData, browserData } from './Navbar';
 
-function Workspace({ selected }: { selected: { tab: string, section?: string, item?: any, index?: number } | null }) {
+function Workspace({ selected, data }: { selected: { tab: string, section?: string, item?: any, index?: number } | null, data: { explorer: explorerData, browser: browserData } }) {
 
 
     if (!selected) {
@@ -20,7 +21,7 @@ function Workspace({ selected }: { selected: { tab: string, section?: string, it
         case 'audio':
             return <AudioPreview asset={selected.item} />;
         case 'entities':
-            return <EntityEditor asset={selected.item} onChange={(data) => {}}/>;
+            return <EntityEditor asset={selected.item} data={data} onChange={(data) => { console.log(data)}} />;
         // }
     }
 
