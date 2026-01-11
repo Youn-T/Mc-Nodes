@@ -20,7 +20,7 @@ function Workspace({ selected }: { selected: { tab: string, section?: string, it
         case 'audio':
             return <AudioPreview asset={selected.item} />;
         case 'entities':
-            return <EntityEditor asset={selected.item} />;
+            return <EntityEditor asset={selected.item} onChange={(data) => {}}/>;
         // }
     }
 

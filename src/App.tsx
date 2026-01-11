@@ -28,7 +28,7 @@ function FlowContent() {
   // const [currentView, setCurrentView] = useState<any>('flow');
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }} className='flex'>
+    <div style={{ width: '100vw', height: '100vh' }} className='flex select-none'>
       {data !== null && <><Navbar data={data} onItemSelect={handleItemSelect} />
         <Workspace selected={selected}></Workspace></>}
       {data === null && <Importer onDataImport={handleDataImport}></Importer>}
