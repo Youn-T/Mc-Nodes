@@ -157,9 +157,9 @@ export function parseComponents(components: Record<string, any>) {
     });
     return parsedComponents; // STILL TO IMPLEMENT
 }
-export function parseComponentGroups(componentGroups: Record<string, any>) {
+export function parseComponentGroups(_componentGroups: Record<string, any>) {
     return {}; // STILL TO IMPLEMENT
 }
-export function parseEvents(events: Record<string, any>) {
+export function parseEvents(_events: Record<string, any>) {
     return {}; // STILL TO IMPLEMENT
 }
