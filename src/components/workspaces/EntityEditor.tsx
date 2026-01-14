@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, Eye, EyeOff, Workflow, Box, Settings, Plus, Trash2 } from "lucide-react";
-import {  EntityData, minecraftComponents, parseComponentGroups, parseComponents, parseEvents } from "../../editors/entityEditor";
+import { ChevronDown, ChevronRight, Eye, EyeOff, Workflow, Box, Settings, Plus, Trash2, FunctionSquare } from "lucide-react";
+import { EntityData, minecraftComponents, parseComponentGroups, parseComponents, parseEvents } from "../../editors/entityEditor";
 import { BasicSelector } from "../utils/BasicSelector";
 
 import { explorerData, browserData } from '../Navbar';
@@ -9,8 +9,28 @@ type Tab = "events" | "visuals" | "settings";
 
 const alphabeticalSort = (values: string[]) => values.sort((a: string, b: string) => a.localeCompare(b));
 
+const formatTextureName = (name: string) => {
+    return name.split("/").slice(2).join("/").split(".").slice(0, -1).join(".");
+}
 
+const formatRenderControllerName = (name: string) => {
+    return name.replace(/_/g, " ").replace(/controller\.render\./g, "");
+}
 
+function RenderControllerItem({rc}: {rc: string | Record<string, any>}) {
+    const name = typeof rc === "string" ? rc : Object.keys(rc)[0];
+
+    const  [usesExpression, setUsesExpression] = useState<boolean>((typeof rc !== "string"));
+
+    const [expression, setExpression] = useState<string>(typeof rc !== "string" ? rc[name] || "" : "");
+
+    return (
+        <div className="text-sm px-2 py-1.5 bg-neutral-700 rounded mb-1 truncate">
+            <div className="flex justify-between items-center text-neutral-400">{formatRenderControllerName(name)} <FunctionSquare className={`w-4 h-4 ${usesExpression ? "text-neutral-300" : "text-neutral-500"}`} onClick={() => setUsesExpression(!usesExpression)}></FunctionSquare></div>
+            {usesExpression && <input value={expression} onChange={(e) => setExpression(e.target.value)} className="w-full focus:outline-none bg-neutral-600 rounded"/>}
+        </div>
+    )
+}
 
 // Composant pour un item de component (style Blender)
 function ComponentItem({ name, isOpen, onToggle, componentData, onValuesChange }: { name: string; isOpen: boolean; onToggle: () => void; componentData: any, onValuesChange: (newValues: any) => void }) {
@@ -93,12 +113,14 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
 
     // Pré-calcul des options de géométrie à partir des models (évite 'await' dans le JSX)
     const [modelGeometryOptions, setModelGeometryOptions] = useState<string[]>([]);
+    const texturesOptions : string[] = data.browser.textures.map(img => formatTextureName(img.name)) || [];
+
     useEffect(() => {
         let mounted = true;
         async function loadModelOptions() {
             try {
                 const models = data?.browser?.models || [];
-                const opts: string[] = [];
+                const modelsOpts: string[] = [];
                 models.forEach(async (model: any) => {
                     try {
                         const blob: Blob = model.blob as Blob;
@@ -106,13 +128,28 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                         console.log(text);
                         const json = JSON.parse(text);
                         json["minecraft:geometry"].forEach((element: any) => {
-                            opts.push(element.description.identifier.replace("geometry.", ""));
+                            modelsOpts.push(element.description.identifier.replace("geometry.", ""));
                         });
                     } catch {
                         return "unknown";
                     }
                 });
 
+                // const textures = data?.browser?.textures || [];
+                // const texturesOpts: string[] = [];
+                // textures.forEach(async (model: any) => {
+                //     try {
+                //         const blob: Blob = model.blob as Blob;
+                //         const text = await blob.text();
+                //         console.log(text);
+                //         const json = JSON.parse(text);
+                //         json["minecraft:geometry"].forEach((element: any) => {
+                //             opts.push(element.description.identifier.replace("geometry.", ""));
+                //         });
+                //     } catch {
+                //         return "unknown";
+                //     }
+                // });
 
                 // await Promise.all(models.map(async (model: any) => {
                 //     try {
@@ -125,7 +162,8 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                 //         return "unknown";
                 //     }
                 // }));
-                if (mounted) setModelGeometryOptions(opts);
+                if (mounted) setModelGeometryOptions(modelsOpts);
+                // if (mounted) setTexturesOptions(texturesOpts);
             } catch {
                 if (mounted) setModelGeometryOptions([]);
             }
@@ -232,6 +270,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
     ];
 
     const [geometryNames, setGeometryNames] = useState<Record<string, any>>({});
+    const [textureNames, setTextureNames] = useState<Record<string, any>>({});
 
     return (
         <div className="flex-1 bg-neutral-900 flex flex-col h-full overflow-hidden">
@@ -356,6 +395,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                                     setClientData(next);
                                 }}></Plus></div>
                                 <div className="flex flex-col gap-2">
+
                                     {
                                         Object.keys(clientData?.description?.geometry || {}).map((key: string) => {
                                             return (
@@ -415,7 +455,111 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                                     Textures
                                     <button className="text-blue-400 hover:text-blue-300"><Plus size={14} /></button>
                                 </div>
-                                {Object.entries(clientData?.description?.textures || {}).map(([key, value]) => (
+                                <div className="flex flex-col gap-2">
+
+                                    {
+                                        Object.keys(clientData?.description?.textures || {}).map((key) => {
+                                            console.log('Rendering texture key:', clientData?.description?.textures[key]);
+                                            return (
+                                                <div className="bg-neutral-700 rounded px-2  text-sm py-1 flex items-center gap-2 " key={key}>
+                                                    <img className="w-11 h-11 bg-neutral-600 rounded flex-shrink-0 " style={{ imageRendering: 'pixelated' }} src={data.browser.textures.find(img => img.name.split("/").slice(1).join("/").replace(".png", "") === clientData?.description?.textures[key])?.url}></img>
+
+                                                    {/* <div className="">
+
+                                                        <input className="text-xs text-neutral-400 border-none outline-none mb-2" value={geometryNames[key] === undefined ? key : geometryNames[key]}
+                                                            spellCheck={false}
+                                                            onChange={(e) =>
+                                                                setGeometryNames(prev => ({ ...prev, [key]: e.target.value }))
+                                                            }
+
+                                                            onBlur={() => {
+                                                                const newKey = geometryNames[key] || key;
+                                                                setGeometryNames(prev => {
+                                                                    const next = { ...prev };
+                                                                    delete next[key];
+                                                                    return next;
+                                                                });
+                                                                setClientData((prev: any) => {
+                                                                    const next = { ...prev };
+                                                                    const geom = next.description?.geometry || {};
+                                                                    if (geom[key] === undefined) return next;
+                                                                    if (newKey === key) return next;
+
+                                                                    const replaceKeyPreserveOrder = (obj: Record<string, any>, oldK: string, newK: string) => {
+                                                                        if (!Object.prototype.hasOwnProperty.call(obj, oldK)) return obj;
+                                                                        const entries = Object.entries(obj);
+                                                                        const newEntries = entries.map(([k, v]) => k === oldK ? [newK, v] : [k, v]);
+                                                                        const res: Record<string, any> = {};
+                                                                        newEntries.forEach(([k, v]) => { res[k] = v; });
+                                                                        return res;
+                                                                    };
+
+                                                                    next.description = { ...next.description, geometry: replaceKeyPreserveOrder(geom, key, newKey) };
+                                                                    return next;
+                                                                });
+                                                            }} />
+                                                        <BasicSelector options={alphabeticalSort(modelGeometryOptions)} value={clientData?.description?.geometry?.[key].replace("geometry.", "") || ""} onChange={(newValue: any) => {
+                                                            setClientData((prev: any) => {
+                                                                const next = { ...prev };
+                                                                next.description.geometry[key] = newValue;
+                                                                return next;
+                                                            });
+                                                        }} />
+
+                                                    </div> */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <input className="text-xs text-neutral-400 border-none outline-none mb-1" value={textureNames[key] === undefined ? key : textureNames[key]}
+                                                            spellCheck={false}
+                                                            onChange={(e) =>
+                                                                setTextureNames(prev => ({ ...prev, [key]: e.target.value }))
+                                                            }
+
+                                                            onBlur={() => {
+                                                                const newKey = textureNames[key] || key;
+                                                                setTextureNames(prev => {
+                                                                    const next = { ...prev };
+                                                                    delete next[key];
+                                                                    return next;
+                                                                });
+                                                                setClientData((prev: any) => {
+                                                                    const next = { ...prev };
+                                                                    const texture = next.description?.textures || {};
+                                                                    if (texture[key] === undefined) return next;
+                                                                    if (newKey === key) return next;
+
+                                                                    const replaceKeyPreserveOrder = (obj: Record<string, any>, oldK: string, newK: string) => {
+                                                                        if (!Object.prototype.hasOwnProperty.call(obj, oldK)) return obj;
+                                                                        const entries = Object.entries(obj);
+                                                                        const newEntries = entries.map(([k, v]) => k === oldK ? [newK, v] : [k, v]);
+                                                                        const res: Record<string, any> = {};
+                                                                        newEntries.forEach(([k, v]) => { res[k] = v; });
+                                                                        return res;
+                                                                    };
+
+                                                                    next.description = { ...next.description, textures: replaceKeyPreserveOrder(texture, key, newKey) };
+                                                                    return next;
+                                                                });
+                                                            }} />
+                                                        <BasicSelector options={/*alphabeticalSort(modelGeometryOptions)*/texturesOptions} value={(clientData?.description?.textures[key]).split("/").slice(1).join("/")/*clientData?.description?.geometry?.[key].replace("geometry.", "") || ""*/} onChange={(newValue: any) => {
+                                                            setClientData((prev: any) => {
+                                                                const next = { ...prev };
+                                                                console.log('Updating texture', key, "(next.description.textures[key])", next.description.textures[key], 'to', newValue);
+                                                                next.description.textures[key] = "textures/" + newValue;
+                                                                return next;
+                                                            });
+                                                        }} />
+                                                        <div className="mb-1"></div>
+                                                    </div>
+                                                    {/* <div className="text-sm truncate" onClick={() => {}}>{clientData?.description?.geometry?.[key] || "geometry.unknown"}</div> */}
+
+                                                    {/* <div className="text-neutral-300">{}</div> */}
+                                                </div>
+                                            )
+                                        })
+                                    }
+                                </div>
+
+                                {/* {Object.entries(clientData?.description?.textures || {}).map(([key, value]) => (
                                     <div key={key} className="flex items-center gap-2 bg-neutral-700 rounded p-2 mb-1">
                                         <div className="w-8 h-8 bg-neutral-600 rounded flex-shrink-0" />
                                         <div className="flex-1 min-w-0">
@@ -423,17 +567,15 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                                             <div className="text-sm truncate ">{String(value).split("/").pop()}</div>
                                         </div>
                                     </div>
-                                ))}
+                                ))} */}
                             </div>
 
                             {/* Render Controllers */}
                             <div className="p-3 border-b border-neutral-700">
                                 <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Render Controllers</div>
-                                {/* {(clientData?.description?.render_controllers || []).map((rc: string, i: number) => (
-                                    <div key={i} className="text-sm px-2 py-1.5 bg-neutral-700 rounded mb-1 truncate">
-                                        {rc}
-                                    </div>
-                                ))} */}
+                                {(clientData?.description?.render_controllers || []).map((rc: string | Record<string, string>) => (
+                                    <RenderControllerItem rc={rc} ></RenderControllerItem>
+                                ))}
                             </div>
 
                             {/* Animations */}
