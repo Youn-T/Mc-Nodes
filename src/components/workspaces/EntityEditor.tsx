@@ -4,6 +4,9 @@ import { EntityData, minecraftComponents, parseComponentGroups, parseComponents,
 import { BasicSelector } from "../utils/BasicSelector";
 
 import { explorerData, browserData } from '../Navbar';
+import FlowGraph from "../FlowComponent";
+import Graph from "../graphs/Graph";
+import { ReactFlow } from "@xyflow/react";
 
 type Tab = "events" | "visuals" | "settings";
 
@@ -17,17 +20,17 @@ const formatRenderControllerName = (name: string) => {
     return name.replace(/_/g, " ").replace(/controller\.render\./g, "");
 }
 
-function RenderControllerItem({rc}: {rc: string | Record<string, any>}) {
+function RenderControllerItem({ rc }: { rc: string | Record<string, any> }) {
     const name = typeof rc === "string" ? rc : Object.keys(rc)[0];
 
-    const  [usesExpression, setUsesExpression] = useState<boolean>((typeof rc !== "string"));
+    const [usesExpression, setUsesExpression] = useState<boolean>((typeof rc !== "string"));
 
     const [expression, setExpression] = useState<string>(typeof rc !== "string" ? rc[name] || "" : "");
 
     return (
         <div className="text-sm px-2 py-1.5 bg-neutral-700 rounded mb-1 truncate">
             <div className="flex justify-between items-center text-neutral-400">{formatRenderControllerName(name)} <FunctionSquare className={`w-4 h-4 ${usesExpression ? "text-neutral-300" : "text-neutral-500"}`} onClick={() => setUsesExpression(!usesExpression)}></FunctionSquare></div>
-            {usesExpression && <input value={expression} onChange={(e) => setExpression(e.target.value)} className="w-full focus:outline-none bg-neutral-600 rounded"/>}
+            {usesExpression && <input value={expression} onChange={(e) => setExpression(e.target.value)} className="w-full focus:outline-none bg-neutral-600 rounded" />}
         </div>
     )
 }
@@ -113,7 +116,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
 
     // Pré-calcul des options de géométrie à partir des models (évite 'await' dans le JSX)
     const [modelGeometryOptions, setModelGeometryOptions] = useState<string[]>([]);
-    const texturesOptions : string[] = data.browser.textures.map(img => formatTextureName(img.name)) || [];
+    const texturesOptions: string[] = data.browser.textures.map(img => formatTextureName(img.name)) || [];
 
     useEffect(() => {
         let mounted = true;
@@ -234,9 +237,9 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                 newEntityData.isSummonable = parsedEntity?.description?.is_summonable || false;
                 newEntityData.components = parseComponents(parsedEntity?.components || {});
                 newEntityData.componentGroups = parseComponentGroups(parsedEntity?.component_groups || {});
-                newEntityData.events = parseEvents(parsedEntity?.events || {});
+                newEntityData.events = /*parseEvents(*/parsedEntity?.events || {}/* )*/;
                 setUserEntityData(newEntityData);
-                console.log('Loaded entity data', userEntityData);
+                console.log('Loaded entity data', userEntityData, parsedEntity);
             } catch (err) {
                 console.log('Error loading entity data', err);
             }
@@ -317,34 +320,41 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                 {/* TAB: Events & Logic - Graph Editor */}
                 {activeTab === "events" && (
                     <div className="h-full flex">
+                        {/* <FlowGraph></FlowGraph> */}
+                        {/* <Graph className="flex-1 relative bg-[#1a1a1a] bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:20px_20px]"></Graph> */}
                         {/* Graph Canvas */}
-                        <div className="flex-1 relative bg-[#1a1a1a] bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:20px_20px]">
-                            <div className="absolute top-4 left-4 z-10 flex gap-2">
-                                <button className="bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded text-sm flex items-center gap-1">
-                                    <Plus size={14} /> Event
-                                </button>
-                                <button className="bg-orange-600 hover:bg-orange-500 px-3 py-1.5 rounded text-sm flex items-center gap-1">
-                                    <Plus size={14} /> Component Group
-                                </button>
-                            </div>
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        {/* <div className="flex-1 relative "> */}
+                            <Graph></Graph>
+                            {/* <FlowGraph></FlowGraph> */}
+                            {/* <ReactFlow nodes={[
+                                {
+                                    id: '0',
+                                    type: 'input',
+                                    data: { label: 'Node' },
+                                    position: { x: 0, y: 50 },
+                                },
+                            ]}></ReactFlow> */}
+                            {/* <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                 <div className="text-neutral-600 text-center">
                                     <Workflow size={48} className="mx-auto mb-2 opacity-50" />
                                     <p>Graph Editor</p>
                                     <p className="text-xs mt-1">Events → Component Groups</p>
                                 </div>
-                            </div>
-                        </div>
+                            </div> */}
+                        {/* </div> */}
 
                         {/* Sidebar: Liste des events/groups */}
                         <div className="w-64 bg-neutral-800 border-l border-neutral-700 overflow-y-auto">
                             <div className="p-2 border-b border-neutral-700">
                                 <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Events</div>
-                                {Object.keys(userEntityData.events).map(eventKey => (
-                                    <div key={eventKey} className="text-sm px-2 py-1.5 bg-blue-900/30 hover:bg-blue-900/50 rounded mb-1 cursor-pointer truncate border-l-2 border-blue-500">
-                                        {eventKey.replace("minecraft:", "").replace("better_on_bedrock:", "")}
-                                    </div>
-                                ))}
+                                {Object.keys(userEntityData.events).map(eventKey => {
+                                    console.log('Rendering event key:', eventKey);
+                                    return (
+                                        <div key={eventKey} className="text-sm px-2 py-1.5 bg-blue-900/30 hover:bg-blue-900/50 rounded mb-1 cursor-pointer truncate border-l-2 border-blue-500">
+                                            {eventKey.replace("minecraft:", "").replace("better_on_bedrock:", "")}
+                                        </div>
+                                    )
+                                })}
                             </div>
                             <div className="p-2">
                                 <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Component Groups</div>
