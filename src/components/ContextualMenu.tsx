@@ -65,7 +65,6 @@ function MenuItem({ node, renderMenu, rfInstance, setMenu, connectTo }: MenuItem
       key={node.name}
       className='rounded-sm text-neutral-300 text-l font-normal capitalize custom-menu-item hover:cursor-pointer select-none flex justify-between'
       onClick={(evt) => {
-        const nodeKey = node.node as keyof typeof nodes;
         const flowPosition = rfInstance?.screenToFlowPosition({
           x: evt.clientX,
           y: evt.clientY,
@@ -75,8 +74,13 @@ function MenuItem({ node, renderMenu, rfInstance, setMenu, connectTo }: MenuItem
 
         const id = Date.now();
 
+        // Support both node key (string) and node object
+        const nodeData = typeof node.node === 'object' 
+          ? node.node 
+          : nodes[node.node as keyof typeof nodes];
+
         addNodes({
-          ...nodes[nodeKey],
+          ...nodeData,
           selected: true,
           dragging: true,
           position: flowPosition,
@@ -158,6 +162,8 @@ export default function ContextMenu({
   rfInstance,
   setMenu,
   connectTo,
+  menu_=menu,
+  nodes_=nodes,
   ...props
 }: ContextMenuProps) {
 
@@ -206,15 +212,15 @@ export default function ContextMenu({
       {!searchMode && <><h2 className='text-gray-400 text-l font-medium mx-1.5 mt-0.5 select-none'>Add</h2>
         <span className='custom-menu-separator pb-1 mx-1.5'></span>
 
-        {recursiveMenu(menu)}</>}
+        {recursiveMenu(menu_)}</>}
       {searchMode && <>
         <h2 className='text-gray-400 text-l font-medium mx-1.5 mt-0.5 select-none'>Search</h2>
         <div className='mx-1.5 mt-0.5 px-2 py-0.5 border border-neutral-500 rounded flex align-middle'><Search className='mr-2 w-4 h-4 color-neutral-500'></Search> <input type='text' onChange={(evt) => setSearchQuery(evt.target.value)} className='focus:outline-none' autoFocus></input></div>
         <div 
           className='max-h-96 overflow-y-auto custom-menu-scroll overscroll-contain'
           onWheel={(e) => e.stopPropagation()}
-        >{Object.keys(nodes).filter((node: string) => node.toLowerCase().includes(searchQuery.toLowerCase().replace(' ', '_'))).map((nodeKey: string) => {
-          const node = nodes[nodeKey];
+        >{Object.keys(nodes_).filter((node: string) => node.toLowerCase().includes(searchQuery.toLowerCase().replace(' ', '_'))).map((nodeKey: string) => {
+          const node = nodes_[nodeKey];
           return (<SingleMenuItem
             key={nodeKey}
             node={node}

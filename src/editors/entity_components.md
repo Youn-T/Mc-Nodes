@@ -1,96 +1,199 @@
 
 
-# === CARD: IDENTITÉ & APPARENCE ===
-// Regroupe tout ce qui définit qui est l'entité et à quoi elle ressemble.  
-- [ ] minecraft:type_family	Catégories de familles (mob, monster, player, etc.).  
-- [ ] minecraft:nameable	Permet de nommer l'entité (étiquette de nom).  
-- [ ] minecraft:scale	Taille visuelle globale de l'entité.  
-- [ ] minecraft:variant	Variante visuelle de base.  
-- [ ] minecraft:mark_variant	Variante visuelle secondaire.  
-- [ ] minecraft:skin_id	ID de texture spécifique.  
-- [ ] minecraft:color	Couleur principale (ex: mouton).  
-- [ ] minecraft:color2	Couleur secondaire.  
+# Entity Components - MC Nodes
 
+Ce document décrit les composants d'entité Minecraft regroupés logiquement pour l'éditeur visuel.
 
-# === CARD: LOCOMOTION & NAVIGATION ===
-// Définit comment l'entité se déplace, où elle peut aller et sa vitesse.
-- [ ] ~~minecraft:movement	Vitesse de marche de base.~~
-- [ ] ~~minecraft:movement.basic / .fly / .swim / .amphibious / .hover	Contrôles de type de mouvement.~~
-- [ ] ~~minecraft:navigation.walk / .fly / .swim / .climb / .generic	Algorithmes de recherche de chemin.~~
-- [ ] ~~minecraft:can_climb / minecraft:can_fly	Capacités de franchissement (murs, air).~~
-- [ ] minecraft:jump.static / .dynamic	Capacité et force de saut.
-- [ ] minecraft:lava_movement / minecraft:water_movement	Vitesse dans les liquides.
-- [ ] minecraft:flying_speed / minecraft:friction_modifier	Ajustements fins de la vélocité.
+---
 
+## ✅ Composants Implémentés
 
-# === CARD: STATS & SANTÉ ===
-// La gestion de la vie, de la mort et des résistances.
-Health	Points de vie maximum et actuels.
-- [ ] minecraft:healable	Définit comment l'entité peut être soignée.
-- [ ] minecraft:damage_sensor	Réactions spécifiques à certains types de dégâts.
-- [ ] minecraft:fire_immune	Immunité totale au feu et à la lave.
-- [ ] minecraft:knockback_resistance	Résistance au recul lors d'un coup.
-- [ ] minecraft:regeneration	Récupération automatique de santé.
+### HEALTH - Santé & Résistances
+Composants Minecraft inclus :
+- `minecraft:health` - Points de vie (value, max)
+- `minecraft:fire_immune` - Immunité au feu
+- `minecraft:knockback_resistance` - Résistance au recul
 
+| Input | Type | Default | Description |
+|-------|------|---------|-------------|
+| max_health | int | 20 | Points de vie maximum |
+| default_health | int | 20 | Points de vie initial |
+| fire_resistant | bool | false | Immunité au feu/lave |
+| knockback_resistance | float | 0 | Résistance au recul (0-1) |
 
-# === CARD: COMBAT & OFFENSIVE ===
-// Tout ce qui permet à l'entité d'attaquer.
-- [ ] minecraft:attack	Dégâts de mêlée et effets de statut au contact.
-- [ ] Attack Damage	Valeur brute des dégâts infligés.
-- [ ] minecraft:shooter	Comportement d'attaque à distance (projectiles).
-- [ ] minecraft:area_attack	Dégâts de zone autour de l'entité.
-- [ ] minecraft:attack_cooldown	Temps d'attente entre deux attaques.
+---
 
+### MOVEMENT - Locomotion
+Composants Minecraft inclus :
+- `minecraft:movement` - Vitesse de base
+- `minecraft:can_climb` - Grimpe aux échelles
+- `minecraft:can_fly` - Capacité de vol
+- `minecraft:floats_in_liquid` - Flotte sur les liquides
+- `minecraft:flying_speed` - Vitesse de vol
+- `minecraft:underwater_movement` - Vitesse sous l'eau
 
-# === CARD: CONTRÔLE & MONTURE ===
-// Permet de rendre l'entité chevauchable et contrôlable par un joueur.
-- [ ] minecraft:rideable	Permet d'être monté par un ou plusieurs passagers.
-- [ ] minecraft:input_ground_controlled / .air_controlled	Permet le contrôle direct (WASD).
-- [ ] minecraft:item_controllable	Objets nécessaires pour diriger la monture (ex: carotte sur un bâton).
-- [ ] minecraft:boostable / minecraft:dash	Capacités d'accélération temporaire.
-- [ ] minecraft:vertical_movement_action	Saut ou plongée pour les montures.
+| Input | Type | Default | Description |
+|-------|------|---------|-------------|
+| movement_speed | float | 0.25 | Vitesse de marche |
+| flying_speed | float | 0.4 | Vitesse de vol |
+| underwater_speed | float | 0.15 | Vitesse sous l'eau |
+| can_climb | bool | false | Peut grimper |
+| can_fly | bool | false | Peut voler |
+| floats_in_liquid | bool | false | Flotte sur l'eau |
 
+---
 
-# === CARD: SOCIAL & APPRIVOISEMENT ===
-// Interactions relationnelles avec le joueur.
-- [ ] minecraft:tameable / minecraft:tamemount	Mécaniques d'apprivoisement.
-- [ ] minecraft:trusting / Trust	Mécanique de confiance (non-agression).
-- [ ] minecraft:bribeable	Rendre l'entité docile avec des objets.
-- [ ] minecraft:interact	Menu d'interaction ou sons au clic.
-- [ ] minecraft:giveable	Objets que l'on peut donner pour déclencher des événements.
+### SIZE - Taille & Collision
+Composants Minecraft inclus :
+- `minecraft:collision_box` - Zone de collision
+- `minecraft:scale` - Échelle visuelle
+- `minecraft:pushable` - Peut être poussé
 
+| Input | Type | Default | Description |
+|-------|------|---------|-------------|
+| collision_width | float | 0.6 | Largeur collision |
+| collision_height | float | 1.8 | Hauteur collision |
+| scale | float | 1.0 | Multiplicateur de taille |
+| is_pushable | bool | true | Poussé par entités |
+| is_pushable_by_piston | bool | true | Poussé par pistons |
 
-# === CARD: REPRODUCTION & CROISSANCE ===
-// Cycle de vie : de l'enfance à la transformation.
-- [ ] minecraft:ageable / minecraft:is_baby	Gestion de la croissance et état "bébé".
-- [ ] minecraft:breedable / minecraft:genetics	Reproduction et transmission des gènes.
-- [ ] minecraft:transformation	Définit en quoi l'entité se transforme (ex: villageois -> zombie).
-- [ ] minecraft:spawn_entity	Capacité à pondre ou générer d'autres entités.
+---
 
+### PHYSICS - Physique
+Composants Minecraft inclus :
+- `minecraft:physics` - Gravité et collision
 
-# === CARD: INVENTAIRE & BUTIN ===
-// Ce que l'entité transporte et ce qu'elle donne à sa mort.
-- [ ] minecraft:inventory	Espace de stockage interne.
-- [ ] minecraft:loot	Table de butin (items lâchés à la mort).
-- [ ] minecraft:equipment / minecraft:equippable	Gestion des armures et outils portés.
-- [ ] minecraft:trade_table / minecraft:barter	Système d'échange et de troc.
-- [ ] minecraft:shareables / minecraft:item_hopper	Ramassage et partage d'objets.
+| Input | Type | Default | Description |
+|-------|------|---------|-------------|
+| has_gravity | bool | true | Affecté par gravité |
+| has_collision | bool | true | Collision activée |
+| push_towards_closest_space | bool | false | Pousse vers espace libre si coincé |
 
+---
 
-# === CARD: CAPTEURS & IA ===
-// Comment l'entité perçoit son environnement.
-- [ ] minecraft:entity_sensor	Détection d'autres entités à proximité.
-- [ ] minecraft:environment_sensor	Réaction aux changements de biome, météo, etc.
-- [ ] minecraft:target_nearby_sensor	Définition des cibles prioritaires.
-- [ ] minecraft:vibration_listener	Réaction aux sons et vibrations (Warden style).
-- [ ] minecraft:block_sensor	Réaction aux blocs spécifiques autour.
+### ATTACK - Combat
+Composants Minecraft inclus :
+- `minecraft:attack` - Dégâts et effets
 
+| Input | Type | Default | Description |
+|-------|------|---------|-------------|
+| damage | float | 3 | Dégâts de mêlée |
+| effect_name | string | "" | Effet de statut appliqué |
+| effect_duration | float | 0 | Durée de l'effet (secondes) |
 
-# === CARD: PHYSIQUE & MONDE ===
-// Interaction avec les blocs et la gravité.
-- [ ] minecraft:physics	Affecté par la gravité et les collisions.
-- [ ] minecraft:collision_box	Taille de la zone de collision physique.
-- [ ] minecraft:pushable	Peut être poussé par d'autres entités/pistons.
-- [ ] minecraft:buoyant	Capacité à flotter sur l'eau.
-- [ ] minecraft:break_blocks / minecraft:trail	Impact direct sur le décor (casser des blocs, laisser des traces).
-- [ ] minecraft:breathable	Gestion de l'apnée et de la suffocation.
+---
+
+### IDENTITY - Identité & Apparence
+Composants Minecraft inclus :
+- `minecraft:type_family` - Catégories (mob, monster, etc.)
+- `minecraft:nameable` - Peut être nommé
+- `minecraft:variant` - Variante visuelle
+- `minecraft:mark_variant` - Variante secondaire
+- `minecraft:color` - Couleur principale
+- `minecraft:color2` - Couleur secondaire
+
+| Input | Type | Default | Description |
+|-------|------|---------|-------------|
+| type_family | string | "mob" | Familles (séparées par virgule) |
+| is_nameable | bool | true | Peut recevoir un nom |
+| always_show_name | bool | false | Affiche toujours le nom |
+| variant | int | 0 | ID de variante |
+| mark_variant | int | 0 | ID de variante secondaire |
+| color | int | 0 | Couleur principale (0-15) |
+| color2 | int | 0 | Couleur secondaire (0-15) |
+
+---
+
+### SPAWN - Apparition & Despawn
+Composants Minecraft inclus :
+- `minecraft:persistent` - Ne despawn jamais
+- `minecraft:despawn` - Règles de despawn
+
+| Input | Type | Default | Description |
+|-------|------|---------|-------------|
+| is_persistent | bool | false | Ne despawn pas |
+| can_despawn | bool | true | Peut disparaître |
+| despawn_from_distance | bool | true | Despawn par distance |
+| min_despawn_distance | int | 32 | Distance min despawn |
+| max_despawn_distance | int | 128 | Distance max despawn |
+| min_range_inactivity_timer | int | 30 | Temps inactivité (sec) |
+
+---
+
+### BREATHING - Respiration
+Composants Minecraft inclus :
+- `minecraft:breathable` - Respiration et suffocation
+- `minecraft:burns_in_daylight` - Brûle au soleil
+
+| Input | Type | Default | Description |
+|-------|------|---------|-------------|
+| breathes_air | bool | true | Respire dans l'air |
+| breathes_water | bool | false | Respire sous l'eau |
+| breathes_lava | bool | false | Respire dans la lave |
+| breathes_solids | bool | false | Respire dans les blocs |
+| total_supply | int | 15 | Réserve d'air (secondes) |
+| suffocate_time | int | -20 | Temps entre dégâts |
+| generates_bubbles | bool | true | Bulles visibles |
+| burns_in_daylight | bool | false | Brûle au soleil |
+
+---
+
+### LOOT - Butin & Expérience
+Composants Minecraft inclus :
+- `minecraft:loot` - Table de loot
+- `minecraft:experience_reward` - XP donnée
+
+| Input | Type | Default | Description |
+|-------|------|---------|-------------|
+| loot_table | string | "" | Chemin vers loot table |
+| xp_on_death | string | "query.last_hit_by_player ? 5 : 0" | XP à la mort (Molang) |
+| xp_on_bred | string | "" | XP à la reproduction (Molang) |
+
+---
+
+### INVENTORY - Inventaire
+Composants Minecraft inclus :
+- `minecraft:inventory` - Propriétés d'inventaire
+
+| Input | Type | Default | Description |
+|-------|------|---------|-------------|
+| inventory_size | int | 5 | Nombre de slots |
+| container_type | string | "none" | Type de conteneur |
+| can_be_siphoned_from | bool | false | Hoppers peuvent extraire |
+| is_private | bool | false | Ne drop pas à la mort |
+| restrict_to_owner | bool | false | Accès propriétaire seul |
+| additional_slots_per_strength | int | 0 | Slots bonus par force |
+
+---
+
+## 📋 Composants à implémenter
+
+### NAVIGATION (TODO)
+- `minecraft:navigation.walk / .fly / .swim / .climb / .generic`
+- `minecraft:jump.static / .dynamic`
+
+### COMBAT AVANCÉ (TODO)
+- `minecraft:shooter` - Attaque à distance
+- `minecraft:area_attack` - Dégâts de zone
+- `minecraft:attack_cooldown` - Cooldown
+
+### MONTURE (TODO)
+- `minecraft:rideable`
+- `minecraft:input_ground_controlled`
+- `minecraft:boostable`
+
+### APPRIVOISEMENT (TODO)
+- `minecraft:tameable`
+- `minecraft:trusting`
+- `minecraft:interact`
+
+### REPRODUCTION (TODO)
+- `minecraft:ageable`
+- `minecraft:breedable`
+- `minecraft:transformation`
+
+### CAPTEURS (TODO)
+- `minecraft:entity_sensor`
+- `minecraft:environment_sensor`
+- `minecraft:damage_sensor`
+

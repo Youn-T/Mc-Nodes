@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, Eye, EyeOff, Workflow, Box, Settings, Plus, Trash2, FunctionSquare } from "lucide-react";
+import { JSX, useEffect, useState } from "react";
+import { ChevronDown, ChevronRight, Eye, EyeOff, Workflow, Box, Settings, Plus, Trash2, FunctionSquare, Zap, Component, Layers, Printer } from "lucide-react";
 import { EntityData, minecraftComponents, parseComponentGroups, parseComponents, parseEvents } from "../../editors/entityEditor";
 import { BasicSelector } from "../utils/BasicSelector";
 
@@ -7,8 +7,13 @@ import { explorerData, browserData } from '../Navbar';
 import FlowGraph from "../FlowComponent";
 import Graph from "../graphs/Graph";
 import { ReactFlow } from "@xyflow/react";
+import EventGraph from "./entityEditor/EventGraph";
+import ComponentGroupsGraph from "./entityEditor/ComponentGroupsGraph";
+import RenderControllersGraph from "./entityEditor/RenderControllersGraph copy";
 
-type Tab = "events" | "visuals" | "settings";
+type Tab = "components" | "visuals" | "events";
+type GraphTab = 'events' | 'component groups' | 'render controllers';
+
 
 const alphabeticalSort = (values: string[]) => values.sort((a: string, b: string) => a.localeCompare(b));
 
@@ -106,7 +111,9 @@ function ComponentItem({ name, isOpen, onToggle, componentData, onValuesChange }
 function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }, onChange: (data: { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }) => void, data: { explorer: explorerData, browser: browserData } }) {
     // const [resContent, setResContent] = useState<Record<string, any>>({});
     // const [behContent, setBehContent] = useState<Record<string, any>>({});
-    const [activeTab, setActiveTab] = useState<Tab>("settings");
+    const [activeTab, setActiveTab] = useState<Tab>("components");
+    const [activeGraphTab, setActiveGraphTab] = useState<GraphTab>("events");
+
     const [openComponents, setOpenComponents] = useState<Set<string>>(new Set());
 
     const [clientData, setClientData] = useState<any>({});
@@ -226,7 +233,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
 
                 const parsedEntity = parsedBeh["minecraft:entity"] || {};
                 const parsedClient = parsedRes["minecraft:client_entity"] || {};
-
+                console.log("events",parsedEntity?.events)
                 setEntityData(parsedEntity);
                 setClientData(parsedClient);
                 const newEntityData: EntityData = entityData
@@ -267,10 +274,23 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
     }
 
     const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-        { id: "settings", label: "Settings", icon: <Settings size={16} /> },
+        { id: "components", label: "Components", icon: <Component size={16} /> },
         { id: "events", label: "Events & Logic", icon: <Workflow size={16} /> },
         { id: "visuals", label: "Visuals", icon: <Box size={16} /> },
     ];
+
+    const graphTabs: { id: GraphTab; label: string; icon: React.ReactNode }[] = [
+        { id: "events", label: "Events", icon: <Zap size={16} /> },
+        { id: "component groups", label: "Component Groups", icon: <Layers size={16} /> },
+        { id: "render controllers", label: "Render Controllers", icon: <Printer size={16} /> },
+    ];
+
+    const graphComponents: Record<GraphTab, JSX.Element> = {
+        "events": <EventGraph eventData={entityData.events}></EventGraph>,
+        "component groups": <ComponentGroupsGraph componentGroupsData={userEntityData.componentGroups}></ComponentGroupsGraph>,
+        "render controllers": <RenderControllersGraph renderControllersData={{ name: "truc" }}></RenderControllersGraph>,
+
+    }
 
     const [geometryNames, setGeometryNames] = useState<Record<string, any>>({});
     const [textureNames, setTextureNames] = useState<Record<string, any>>({});
@@ -284,17 +304,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                         <h2 className="capitalize font-bold text-lg">{name()}</h2>
                         {/* <span className="text-xs text-neutral-400 font-mono">{identifier}</span> */}
                     </div>
-                    <div className="flex gap-2 text-xs">
-                        <span className="bg-green-900/50 text-green-400 px-2 py-0.5 rounded">
-                            {Object.keys(userEntityData.components).length} components
-                        </span>
-                        <span className="bg-orange-900/50 text-orange-400 px-2 py-0.5 rounded">
-                            {Object.keys(userEntityData.componentGroups).length} groups
-                        </span>
-                        <span className="bg-blue-900/50 text-blue-400 px-2 py-0.5 rounded">
-                            {Object.keys(userEntityData.events).length} events
-                        </span>
-                    </div>
+
                 </div>
 
                 {/* Tabs */}
@@ -319,54 +329,28 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
             <div className="flex-1 overflow-hidden">
                 {/* TAB: Events & Logic - Graph Editor */}
                 {activeTab === "events" && (
-                    <div className="h-full flex">
-                        {/* <FlowGraph></FlowGraph> */}
-                        {/* <Graph className="flex-1 relative bg-[#1a1a1a] bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:20px_20px]"></Graph> */}
-                        {/* Graph Canvas */}
-                        {/* <div className="flex-1 relative "> */}
-                            <Graph></Graph>
-                            {/* <FlowGraph></FlowGraph> */}
-                            {/* <ReactFlow nodes={[
-                                {
-                                    id: '0',
-                                    type: 'input',
-                                    data: { label: 'Node' },
-                                    position: { x: 0, y: 50 },
-                                },
-                            ]}></ReactFlow> */}
-                            {/* <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className="text-neutral-600 text-center">
-                                    <Workflow size={48} className="mx-auto mb-2 opacity-50" />
-                                    <p>Graph Editor</p>
-                                    <p className="text-xs mt-1">Events → Component Groups</p>
-                                </div>
-                            </div> */}
-                        {/* </div> */}
+                    <div className="flex flex-col h-full w-full">
+                        <div className="h-full flex relative">
+                            <div className="bg-neutral-800 p-1 rounded-lg absolute z-10 border border-neutral-700 m-2 flex">{graphTabs.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveGraphTab(tab.id)}
+                                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors rounded-lg ${activeGraphTab === tab.id
+                                        ? "border-blue-500 text-neutral-300 bg-neutral-900 "
+                                        : "border-transparent text-neutral-400 hover:text-neutral-200 hover:bg-neutral-750"
+                                        }`}
+                                >
+                                    {tab.icon}
+                                    {tab.label}
+                                </button>
+                            ))}</div>
 
-                        {/* Sidebar: Liste des events/groups */}
-                        <div className="w-64 bg-neutral-800 border-l border-neutral-700 overflow-y-auto">
-                            <div className="p-2 border-b border-neutral-700">
-                                <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Events</div>
-                                {Object.keys(userEntityData.events).map(eventKey => {
-                                    console.log('Rendering event key:', eventKey);
-                                    return (
-                                        <div key={eventKey} className="text-sm px-2 py-1.5 bg-blue-900/30 hover:bg-blue-900/50 rounded mb-1 cursor-pointer truncate border-l-2 border-blue-500">
-                                            {eventKey.replace("minecraft:", "").replace("better_on_bedrock:", "")}
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                            <div className="p-2">
-                                <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Component Groups</div>
-                                {Object.keys(userEntityData.componentGroups).map(groupKey => (
-                                    <div key={groupKey} className="text-sm px-2 py-1.5 bg-orange-900/30 hover:bg-orange-900/50 rounded mb-1 cursor-pointer truncate border-l-2 border-orange-500">
-                                        {groupKey.replace("minecraft:", "").replace("better_on_bedrock:", "")}
-                                    </div>
-                                ))}
-                            </div>
+                            {
+                                graphComponents[activeGraphTab]
+                            }
+
                         </div>
-                    </div>
-                )}
+                    </div>)}
 
                 {/* TAB: Visuals */}
                 {activeTab === "visuals" && (
@@ -606,7 +590,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                 )}
 
                 {/* TAB: Settings & Components */}
-                {activeTab === "settings" && (
+                {activeTab === "components" && (
                     <div className="h-full flex">
                         {/* Left: Base Settings */}
                         <div className="w-80 bg-neutral-850 border-r border-neutral-700 overflow-y-auto p-4">

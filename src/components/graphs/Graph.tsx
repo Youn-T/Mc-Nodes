@@ -27,9 +27,38 @@ const nodeTypes = {
 
 const panOnDrag = [1]; // Seulement le clic molette pour React Flow, on gère le clic droit manuellement
 
-function Graph({ initialNodes, initialEdges, className }: { initialNodes?: CustomNodeType[], initialEdges?: Edge[], className?: string }) {
-    const [nodes, , onNodesChange] = useNodesState(initialNodes || []);
+function Graph({ initialNodes, initialEdges, className, menuItems, nodes_ }: { initialNodes?: CustomNodeType[], initialEdges?: Edge[], className?: string, menu_?: any, menuItems?: any, nodes_?: any }) {
+    const [nodes, setNodesState, onNodesChangeBase] = useNodesState(initialNodes || []);
+
+    // Wrapper pour empêcher la suppression des nodes avec deletable: false
+    const onNodesChange = useCallback(
+        (changes: any[]) => {
+            const filteredChanges = changes.filter((change: any) => {
+                if (change.type === 'remove') {
+                    const node = nodes.find((n) => n.id === change.id);
+                    if (node?.data?.deletable === false) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            onNodesChangeBase(filteredChanges);
+        },
+        [nodes, onNodesChangeBase],
+    );
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges || []);
+
+    useEffect(() => {
+        if (initialNodes) {
+            setNodesState(initialNodes);
+        }
+    }, [initialNodes, setNodesState]);
+
+    useEffect(() => {
+        if (initialEdges) {
+            setEdges(initialEdges);
+        }
+    }, [initialEdges, setEdges]);
 
     const rfInstance = useRef<any>(null);
     const flowWrapper = useRef<HTMLDivElement>(null);
@@ -249,14 +278,16 @@ function Graph({ initialNodes, initialEdges, className }: { initialNodes?: Custo
 
                         setMenu({
                             id: "pane",
-                            top: event.clientY - pane.y < pane.height - 200 ? event.clientY - pane.y : false, 
-                            left: event.clientX - pane.x < pane.width - 200 ? event.clientX - pane.x : false, 
-                            right: event.clientX - pane.x > pane.width - 200 ? pane.right -event.clientX  : false, 
-                            bottom: event.clientY - pane.y > pane.height - 200 ? pane.bottom - event.clientY : false, 
+                            top: event.clientY - pane.y < pane.height - 200 ? event.clientY - pane.y : false,
+                            left: event.clientX - pane.x < pane.width - 200 ? event.clientX - pane.x : false,
+                            right: event.clientX - pane.x > pane.width - 200 ? pane.right - event.clientX : false,
+                            bottom: event.clientY - pane.y > pane.height - 200 ? pane.bottom - event.clientY : false,
                             flowWrapper: flowWrapper,
                             reactFlowInstance: rfInstance,
                             rfInstance: rfInstance.current,
                             setMenu: setMenu,
+                            menu_: menuItems,
+                            nodes_: nodes_,
                         });
 
                     } else {
@@ -533,6 +564,8 @@ function Graph({ initialNodes, initialEdges, className }: { initialNodes?: Custo
             rfInstance: rfInstance.current,
             setMenu: setMenu,
             connectTo: connectionState,
+            menu_: menuItems,
+            nodes_: nodes_,
         });
 
 

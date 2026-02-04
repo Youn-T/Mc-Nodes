@@ -19,6 +19,8 @@ export type CustomNodeData = {
   outputs?: SocketData[];
   category?: string;
   name?: string;
+  wrapped?: boolean;
+  deletable?: boolean; // Si false, le node ne peut pas être supprimé
   onDataChange?: (socketId: string, value: string | Record<string, string>, isOutput: boolean) => void;
 };
 
@@ -123,7 +125,7 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
     onDataChange,
   } = data;
 
-  const [wrapped, setWrapped] = useState(true);
+  const [wrapped, setWrapped] = useState(Object.prototype.hasOwnProperty.call(data, 'wrapped') ? !data.wrapped : true);
   const internalId = Math.random().toString(36).substring(2, 9);
   
   // Fonction pour obtenir la valeur d'un socket (input ou output)

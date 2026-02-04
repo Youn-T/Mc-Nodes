@@ -20,8 +20,8 @@ const nodeColors: Record<string, string> = {
     'Flow': "#52A3CC",
     'Vector': "#527ACC",
     'String': "#7ACC52",
-    "Array" : "#CC52A3",
-    'Variables' : "#52CC7A"
+    "Array": "#CC52A3",
+    'Variables': "#52CC7A"
 }
 
 const getItemId = (name: string) => {
@@ -29,11 +29,11 @@ const getItemId = (name: string) => {
 }
 
 const socketDefaultValue = {
-  boolean: false,
-  integer: 0,
-  float: 0.0,
-  string: "",
-  vector: 0,
+    boolean: false,
+    integer: 0,
+    float: 0.0,
+    string: "",
+    vector: 0,
 }
 
 // ==========================================
@@ -805,11 +805,11 @@ export const rawNodes: rawNode[] = [
 export const nodes: Record<string, node> = rawNodes.reduce((obj: Record<string, node>, item: rawNode) => {
     const id = getItemId(item.name);
     obj[id] = {
-        type: 'custom', 
+        type: 'custom',
         data: {
             label: item.label ? item.label : item.name.replace(/\b\w/g, c => c.toUpperCase()),
-            inputs: item.inputs.map((input) => ({ id: input.name.toLowerCase().replace(/\s+/g, '_'), label: input.name.replace(/\s+/g, '_'), mode: input.mode, type: input.type, ...(socketDefaultValue.hasOwnProperty(input.type as string) && {value: socketDefaultValue[input.type as keyof typeof socketDefaultValue]}) })),
-            outputs: item.outputs.map((output) => ({ id: output.name.toLowerCase().replace(/\s+/g, '_'), label: output.name.replace(/\s+/g, '_'), mode: output.mode, type: output.type, ...(socketDefaultValue.hasOwnProperty(output.type as string) && {value: socketDefaultValue[output.type as keyof typeof socketDefaultValue]}) })),
+            inputs: item.inputs.map((input) => ({ id: input.name.toLowerCase().replace(/\s+/g, '_'), label: input.name.replace(/\s+/g, '_'), mode: input.mode, type: input.type, ...(socketDefaultValue.hasOwnProperty(input.type as string) && { value: socketDefaultValue[input.type as keyof typeof socketDefaultValue] }) })),
+            outputs: item.outputs.map((output) => ({ id: output.name.toLowerCase().replace(/\s+/g, '_'), label: output.name.replace(/\s+/g, '_'), mode: output.mode, type: output.type, ...(socketDefaultValue.hasOwnProperty(output.type as string) && { value: socketDefaultValue[output.type as keyof typeof socketDefaultValue] }) })),
             headerColor: item.color ? item.color : nodeColors[item.menu[0]],
             category: item.menu[0],
             name: item.name
@@ -842,27 +842,27 @@ type menuOption = {
 
 const initialMenu: menuOption[][] = [
     [
-        {name: "Event", options: [[]]},
-        {name: "System", options: [[]]},
-        {name: "World", options: [[]]},
-        {name: "Dimension", options: [[]]},
+        { name: "Event", options: [[]] },
+        { name: "System", options: [[]] },
+        { name: "World", options: [[]] },
+        { name: "Dimension", options: [[]] },
     ],
     [
-        {name: "Player", options: [[]]},
-        {name: "Entity", options: [[]]},
-        {name: "Item", options: [[]]},
-        {name: "Block", options: [[]]},
-        {name: "Scoreboard", options: [[]]}
+        { name: "Player", options: [[]] },
+        { name: "Entity", options: [[]] },
+        { name: "Item", options: [[]] },
+        { name: "Block", options: [[]] },
+        { name: "Scoreboard", options: [[]] }
     ],
     [
-        {name: "Flow", options: [[]]},
-        {name: "Logic", options: [[]]},
-        {name: "Variable", options: [[]]},
-        {name: "Constant", options: [[]]},
-        {name: "Math", options: [[]]},
-        {name: "Vector", options: [[]]},
-        {name: "String", options: [[]]},
-        {name: "Array", options: [[]]}
+        { name: "Flow", options: [[]] },
+        { name: "Logic", options: [[]] },
+        { name: "Variable", options: [[]] },
+        { name: "Constant", options: [[]] },
+        { name: "Math", options: [[]] },
+        { name: "Vector", options: [[]] },
+        { name: "String", options: [[]] },
+        { name: "Array", options: [[]] }
     ],
 ]
 
