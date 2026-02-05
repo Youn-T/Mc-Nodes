@@ -9,7 +9,7 @@ import Graph from "../graphs/Graph";
 import { ReactFlow } from "@xyflow/react";
 import EventGraph from "./entityEditor/EventGraph";
 import ComponentGroupsGraph from "./entityEditor/ComponentGroupsGraph";
-import RenderControllersGraph from "./entityEditor/RenderControllersGraph copy";
+import RenderControllersGraph from "./entityEditor/RenderControllersGraph";
 
 type Tab = "components" | "visuals" | "events";
 type GraphTab = 'events' | 'component groups' | 'render controllers';
@@ -288,7 +288,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
     const graphComponents: Record<GraphTab, JSX.Element> = {
         "events": <EventGraph eventData={entityData.events}></EventGraph>,
         "component groups": <ComponentGroupsGraph componentGroupsData={userEntityData.componentGroups}></ComponentGroupsGraph>,
-        "render controllers": <RenderControllersGraph renderControllersData={{ name: "truc" }}></RenderControllersGraph>,
+        "render controllers": <RenderControllersGraph renderControllersData={clientData?.description?.render_controllers || []}></RenderControllersGraph>,
 
     }
 

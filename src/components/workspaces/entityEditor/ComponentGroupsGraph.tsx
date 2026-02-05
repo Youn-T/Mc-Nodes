@@ -156,7 +156,6 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
 
 
     useEffect(() => {
-        console.log("componentGroupsData changed", componentGroupsData);
         const newNodes: any[] = [];
         const newConnections: any[] = [];
         let totalOffsetY = 0;
@@ -171,7 +170,7 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
                     label: componentGroupsNames[key] || formatCOmponentGroupName(key),
                     headerColor: "#CC5252",
                     inputs: [{ id: "components", label: "components", type: "component", mode: "value" }],
-                    deletable: false, // Les nodes de component group ne peuvent pas être supprimés
+                    deletable: false, // Component group nodes cannot be deleted
                 }
             });
 
@@ -184,7 +183,7 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
                         label: componentKey,
                         headerColor: "#7A52CC",
                         outputs: [{ id: "component", label: "component", type: "component", mode: "value" }],
-                        inputs: minecraftComponents[componentKey].inputs.map((input: any) => ({ //Object.keys(grp[componentKey])
+                        inputs: minecraftComponents[componentKey].inputs.map((input: any) => ({
                             id: input.name,
                             label: input.name,
                             type: typeParser(input.type),
@@ -202,9 +201,8 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
                     targetHandle: "components",
                 });
             });
-            totalOffsetY += Object.keys(grp).length * 75 + 50; // Ajouter un espacement entre les groupes
+            totalOffsetY += Object.keys(grp).length * 75 + 50; // Add spacing between groups
         });
-        console.log("newNodes", newNodes);
         setGraphNodes(newNodes);
         setGraphConnections(newConnections);
     }, [data, componentGroupsNames]);
@@ -222,7 +220,6 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
     const componentMenu = useMemo(() => generateComponentMenu(), []);
     const componentMenuNodes = useMemo(() => generateComponentMenuNodes(), []);
 
-    console.log("data", data);
     return (<>
         <Graph initialNodes={graphNodes} initialEdges={graphConnections} menuItems={componentMenu} nodes_={componentMenuNodes}></Graph>
 
@@ -230,37 +227,15 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
         <div className="w-64 bg-neutral-800 border-l border-neutral-700 overflow-y-auto p-2">
             <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2 flex items-center justify-between ">Component Groups <Plus className="w-4 h-4 font-bold" onClick={(e) => {
                 e.stopPropagation();
-                console.trace()
-                console.log('Adding new geometry entry');
-
+                
                 const next = { ...data };
                 let keyIdx = 1;
                 while (next.hasOwnProperty("new_component_group_" + keyIdx)) { keyIdx++; }
-                console.log(next)
                 next[("new_component_group_" + keyIdx)] = {};
-                // while (next.description.geometry.hasOwnProperty("new_geometry_" + keyIdx)) { keyIdx++; }
-                // console.log(next)
-                // next.description.geometry["new_geometry_" + keyIdx] = modelGeometryOptions[0] || "geometry.unknown";
-                // next.description.geometry["new_geometry_" + keyIdx] = ;
-
+                
                 setData(next);
-                // setClientData(next);
             }}></Plus></div>
-            {/* <div className="flex"><div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Component Groups</div> <Plus className="w-4 h-4 font-bold" onClick={(e) => {
-                                    e.stopPropagation();
-                                    console.trace()
-                                    console.log('Adding new geometry entry');
-
-                                    // const next = { ...clientData };
-                                    let keyIdx = 1;
-                                    // while (next.description.geometry.hasOwnProperty("new_geometry_" + keyIdx)) { keyIdx++; }
-                                    // console.log(next)
-                                    // next.description.geometry["new_geometry_" + keyIdx] = modelGeometryOptions[0] || "geometry.unknown";
-                                    // next.description.geometry["new_geometry_" + keyIdx] = ;
-
-
-                                    // setClientData(next);
-                                }}></Plus></div> */}
+            
             <div className="flex flex-col gap-2">
                 {
                     Object.keys(data).map((componentGroupsKey: string) => {
