@@ -22,7 +22,7 @@ const generateComponentMenu = () => {
                 inputs: minecraftComponents[key].inputs.map((input: any) => ({
                     id: input.name,
                     label: input.name,
-                    type: input.type,
+                    type: typeParser(input.type),
                     mode: "value",
                     value: input.default
                 })),
@@ -31,8 +31,50 @@ const generateComponentMenu = () => {
         }
     }));
 
+    const constants = [
+        {
+            name: "boolean",
+            node: {
+                type: 'custom',
+                data: {
+                    category: "Constant",
+                    label: "Boolean",
+                    headerColor: "#D97706",
+                    outputs: [{ id: "value", label: "value", type: "boolean", mode: "value" }],
+                    wrapped: true,
+                }
+            }
+        },
+        {
+            name: "integer",
+            node: {
+                type: 'custom',
+                data: {
+                    category: "Constant",
+                    label: "Integer",
+                    headerColor: "#059669",
+                    outputs: [{ id: "value", label: "value", type: "integer", mode: "value" }],
+                    wrapped: true,
+                }
+            }
+        },
+        {
+            name: "float",
+            node: {
+                type: 'custom',
+                data: {
+                    category: "Constant",
+                    label: "Float",
+                    headerColor: "#0891B2",
+                    outputs: [{ id: "value", label: "value", type: "float", mode: "value" }],
+                    wrapped: true,
+                }
+            }
+        }
+    ];
+
     // Retourne le menu au format attendu par Graph (tableau de groupes)
-    return [[...menuItems]];
+    return [constants, menuItems];
 };
 
 const typeParser = (value: any): string => {
@@ -43,6 +85,38 @@ const typeParser = (value: any): string => {
 
 const generateComponentMenuNodes = () => {
     const menuItems: Record<string, any> = {}; 
+
+    menuItems["boolean"] = {
+        type: 'custom',
+        data: {
+            label: "Boolean",
+            headerColor: "#D97706",
+            outputs: [{ id: "value", label: "value", type: "boolean", mode: "value" }],
+            inputs: [{ id: "value", label: "value", type: "boolean", mode: "value", value: false }],
+            wrapped: true,
+        }
+    };
+    menuItems["integer"] = {
+        type: 'custom',
+        data: {
+            label: "Integer",
+            headerColor: "#059669",
+            outputs: [{ id: "value", label: "value", type: "integer", mode: "value" }],
+            inputs: [{ id: "value", label: "value", type: "integer", mode: "value", value: 0 }],
+            wrapped: true,
+        }
+    };
+    menuItems["float"] = {
+        type: 'custom',
+        data: {
+            label: "Float",
+            headerColor: "#0891B2",
+            outputs: [{ id: "value", label: "value", type: "float", mode: "value" }],
+            inputs: [{ id: "value", label: "value", type: "float", mode: "value", value: 0.0 }],
+            wrapped: true,
+        }
+    };
+
     Object.entries(minecraftComponents).forEach(([key, component]) => (
         
         menuItems[key.toLocaleLowerCase()] = {

@@ -11,7 +11,7 @@ export type SocketData = {
   mode?: string;
   value?: string | Record<string, string>; // string pour les types simples, Record pour les vecteurs {0: "x", 1: "y", 2: "z"}
 };
- 
+
 export type CustomNodeData = {
   label: string;
   headerColor?: string;
@@ -50,9 +50,9 @@ const socketDefaultValue = {
   vector: 0,
 }
 
-const InputRow = ({ input, internalId, getSocketValue, updateSocketValue }: { 
-  input: SocketData, 
-  internalId: string, 
+const InputRow = ({ input, internalId, getSocketValue, updateSocketValue }: {
+  input: SocketData,
+  internalId: string,
   getSocketValue: (socket: SocketData, componentIndex?: number) => string,
   updateSocketValue: (socketId: string, newValue: string, isOutput: boolean, componentIndex?: number) => void
 }) => {
@@ -106,11 +106,13 @@ const InputRow = ({ input, internalId, getSocketValue, updateSocketValue }: {
 
         </Handle>
         {/* <span className="custom-node-socket-indicator" style={{ background: socketColors[input.type] || socketColors.default }} /> */}
-        <span className="custom-node-label input-label ">{input.label}</span>
+        {/* { (!(connections.length === 0 && socketDefaultValue.hasOwnProperty(input.type))) &&  */}
+        {(!(connections.length === 0 && socketDefaultValue.hasOwnProperty(input.type))) && <span className="custom-node-label input-label ">{input.label}</span>}
+        {connections.length === 0 && socketDefaultValue.hasOwnProperty(input.type) &&
+          nodeInput({ type: input.type as SocketType, socket: input, internalId, getSocketValue, updateSocketValue, isOutput: false, label: input.label })
+        }
       </div>
-      {connections.length === 0 && socketDefaultValue.hasOwnProperty(input.type) && 
-        nodeInput({ type: input.type as SocketType, socket: input, internalId, getSocketValue, updateSocketValue, isOutput: false })
-      }
+
     </div>
   );
 };
@@ -127,12 +129,12 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
 
   const [wrapped, setWrapped] = useState(Object.prototype.hasOwnProperty.call(data, 'wrapped') ? !data.wrapped : true);
   const internalId = Math.random().toString(36).substring(2, 9);
-  
+
   // Fonction pour obtenir la valeur d'un socket (input ou output)
   const getSocketValue = (socket: SocketData, componentIndex?: number): string => {
     const socketType = socket.type as keyof typeof socketDefaultValue;
     const defaultVal = socketDefaultValue[socketType];
-    
+
     if (socket.type === 'vector') {
       // Pour les vecteurs, la valeur est un Record<string, string>
       const vectorValue = socket.value as Record<string, string> | undefined;
@@ -152,11 +154,11 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
   // Fonction pour mettre à jour la valeur d'un socket
   const updateSocketValue = (socketId: string, newValue: string, isOutput: boolean, componentIndex?: number) => {
     if (!onDataChange) return;
-    
+
     const socketList = isOutput ? outputs : inputs;
     const socket = socketList.find(s => s.id === socketId);
     if (!socket) return;
-    
+
     if (socket.type === 'vector' && componentIndex !== undefined) {
       // Pour les vecteurs, on met à jour un composant spécifique
       const currentValue = (socket.value as Record<string, string>) || { '0': '0', '1': '0', '2': '0' };
@@ -190,8 +192,10 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
 
 
               <div className='relative'>
-                <span className="custom-node-label output-label">{output.label}</span>
-
+                {(!(socketDefaultValue.hasOwnProperty(output.type) && category === "Constant")) && <span className="custom-node-label output-label">{output.label}</span>}
+                {(socketDefaultValue.hasOwnProperty(output.type) && category === "Constant") &&
+                  nodeInput({ type: output.type as SocketType, socket: output, internalId, getSocketValue, updateSocketValue, isOutput: true, label: output.label })
+                }
                 <Handle
                   type="source"
                   position={Position.Right}
@@ -231,9 +235,7 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
                   />
                   }</Handle>
               </div>
-              {(socketDefaultValue.hasOwnProperty(output.type) && category === "Constant") && 
-                nodeInput({ type: output.type as SocketType, socket: output, internalId, getSocketValue, updateSocketValue, isOutput: true })
-              }
+
             </div>
           ))}
 
@@ -362,57 +364,120 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
 }
 
 
-function nodeInput({ type, socket, internalId, getSocketValue, updateSocketValue, isOutput }: { 
-  type: SocketType; 
-  socket: SocketData; 
+function nodeInput({ type, socket, internalId, getSocketValue, updateSocketValue, isOutput, label }: {
+  type: SocketType;
+  socket: SocketData;
   internalId: string;
   getSocketValue: (socket: SocketData, componentIndex?: number) => string;
   updateSocketValue: (socketId: string, newValue: string, isOutput: boolean, componentIndex?: number) => void;
   isOutput: boolean;
+  label: string;
 }) {
   const id = socket.id;
+
+  // Cas spécial pour boolean : affiche une checkbox
+  if (type === 'boolean') {
+    const currentValue = getSocketValue(socket);
+    const isChecked = currentValue === 'true';
+
+    return (
+      <div className="w-full">
+        <div className="custom-node-value-row flex items-center justify-between " key={`${id}-boolean`}>
+          <span className="custom-node-value-label">{label ? label : "Value"}</span>
+          <label
+            className="custom-node-checkbox-container"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              id={`input-${internalId}-${id}-boolean`}
+              type="checkbox"
+              checked={isChecked}
+              onChange={(evt) => {
+                updateSocketValue(id, evt.target.checked ? 'true' : 'false', isOutput);
+              }}
+              style={{ display: 'none' }}
+            />
+            <div
+              className="custom-node-checkbox"
+              style={{
+                width: '14px',
+                height: '14px',
+                borderRadius: '2px',
+                border: `2px solid #a3a3a3`,
+                backgroundColor: isChecked ? '#a3a3a3' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.15s ease',
+              }}
+            >
+              {isChecked && (
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </div>
+          </label>
+        </div>
+      </div>);
+  }
 
   return (<>
     {Array.from(type === 'vector' ? [0, 1, 2] : [0]).map((compIdx) => {
       const currentValue = getSocketValue(socket, type === 'vector' ? compIdx : undefined);
       return (
-        <div className="custom-node-value-row" key={`${id}-${compIdx}`}>
-          <span className="custom-node-value-label cursor-text" onClick={() => {
-            document.getElementById(`input-${internalId}-${id}-${compIdx}`)?.focus();
-          }}>Value</span>
-          <input
-            id={`input-${internalId}-${id}-${compIdx}`}
-            type="text"
-            className='custom-node-input rounded-sm text-right'
-            value={currentValue}
-            onChange={(evt) => {
-              const v = evt.target.value;
+        <div className="w-full" key={`${id}-container-${compIdx}`}>
+          <div className="custom-node-value-row" key={`${id}-${compIdx}`}>
+            <span className="custom-node-value-label cursor-text truncate" onClick={() => {
+              document.getElementById(`input-${internalId}-${id}-${compIdx}`)?.focus();
+            }}>{label ? label : "Value"}</span>
+            <input
+              id={`input-${internalId}-${id}-${compIdx}`}
+              type="text"
+              className='custom-node-input rounded-sm text-right'
+              value={currentValue}
+              onChange={(evt) => {
+                const v = evt.target.value;
 
-              // Autorise les étapes intermédiaires (vide, "-") pour une meilleure UX
-              if (v === '' || v === '-') {
+                // Autorise les étapes intermédiaires (vide, "-") pour une meilleure UX
+                if (v === '' || v === '-') {
+                  updateSocketValue(id, v, isOutput, type === 'vector' ? compIdx : undefined);
+                  return;
+                }
+
+                // Choix du regex selon type (entier vs flottant)
+                const isText = type === 'string';
+                const isInteger = type === 'integer';
+                const intRegex = /^-?\d*$/;
+                const floatRegex = /^-?\d*\.?\d*$/;
+
+                const ok = isText ? true : isInteger ? intRegex.test(v) : floatRegex.test(v);
+
+                if (!ok) {
+                  // invalide — n'applique pas la mise à jour
+                  return;
+                }
+
                 updateSocketValue(id, v, isOutput, type === 'vector' ? compIdx : undefined);
-                return;
-              }
-
-              // Choix du regex selon type (entier vs flottant)
-              const isText = type === 'string';
-              const isInteger = type === 'integer';
-              const intRegex = /^-?\d*$/;
-              const floatRegex = /^-?\d*\.?\d*$/;
-
-              const ok = isText ? true : isInteger ? intRegex.test(v) : floatRegex.test(v);
-
-              if (!ok) {
-                // invalide — n'applique pas la mise à jour
-                return;
-              }
-
-              updateSocketValue(id, v, isOutput, type === 'vector' ? compIdx : undefined);
-            }}
-            onFocus={(evt) => { evt.target.select() }}
-          />
-        </div>
-      );
+              }}
+              onFocus={(evt) => { evt.target.select() }}
+            />
+          </div>
+        </div>);
     })}
 
   </>)

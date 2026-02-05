@@ -616,7 +616,14 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_ }: { i
 
                 return false;
             }
-            return !hasCycle(target) && (connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true);
+
+            const outs = edges.filter(edge => edge.source === source?.id)
+            const ins = edges.filter(edge => edge.target === source?.id) // BRICLOAGE
+
+
+            console.log("isValidConnection", connection, "hasCycle?",(connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true));
+
+            return !hasCycle(target) && ((connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true) || (ins.length === 0 && outs.length === 0));
 
         },
         [getNodes, getEdges],
