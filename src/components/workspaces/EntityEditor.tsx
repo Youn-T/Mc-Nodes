@@ -4,15 +4,14 @@ import { EntityData, minecraftComponents, parseComponentGroups, parseComponents,
 import { BasicSelector } from "../utils/BasicSelector";
 
 import { explorerData, browserData } from '../Navbar';
-import FlowGraph from "../FlowComponent";
-import Graph from "../graphs/Graph";
-import { ReactFlow } from "@xyflow/react";
 import EventGraph from "./entityEditor/EventGraph";
 import ComponentGroupsGraph from "./entityEditor/ComponentGroupsGraph";
 import RenderControllersGraph from "./entityEditor/RenderControllersGraph";
 
 type Tab = "components" | "visuals" | "events";
 type GraphTab = 'events' | 'component groups' | 'render controllers';
+
+export type ComponentGroupsData = Record<string, any>;
 
 
 const alphabeticalSort = (values: string[]) => values.sort((a: string, b: string) => a.localeCompare(b));
@@ -273,6 +272,15 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
         });
     }
 
+    const setComponentGroupsData = (newData: ComponentGroupsData) => {
+        setUserEntityData(prev => {
+            const next = { ...prev };
+            next.componentGroups = newData;
+            return next;
+        });
+    }
+
+
     const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
         { id: "components", label: "Components", icon: <Component size={16} /> },
         { id: "events", label: "Events & Logic", icon: <Workflow size={16} /> },
@@ -287,7 +295,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
 
     const graphComponents: Record<GraphTab, JSX.Element> = {
         "events": <EventGraph eventData={entityData.events}></EventGraph>,
-        "component groups": <ComponentGroupsGraph componentGroupsData={userEntityData.componentGroups}></ComponentGroupsGraph>,
+        "component groups": <ComponentGroupsGraph componentGroupsData={userEntityData.componentGroups} setComponentGroupsData={setComponentGroupsData}></ComponentGroupsGraph>,
         "render controllers": <RenderControllersGraph renderControllersData={clientData?.description?.render_controllers || []}></RenderControllersGraph>,
 
     }

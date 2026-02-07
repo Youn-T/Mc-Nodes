@@ -27,7 +27,7 @@ const nodeTypes = {
 
 const panOnDrag = [1]; // Seulement le clic molette pour React Flow, on gère le clic droit manuellement
 
-function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdgesUpdate, onNodesUpdate }: { initialNodes?: CustomNodeType[], initialEdges?: Edge[], className?: string, menu_?: any, menuItems?: any, nodes_?: any, onNodesUpdate?: (nodes: CustomNodeType[]) => void, onEdgesUpdate?: (nodes: Edge[]) => void }) {
+function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdgesUpdate, onNodesUpdate, customIsValidConnection }: { initialNodes?: CustomNodeType[], initialEdges?: Edge[], className?: string, menu_?: any, menuItems?: any, nodes_?: any, onNodesUpdate?: (nodes: CustomNodeType[]) => void, onEdgesUpdate?: (nodes: Edge[]) => void, customIsValidConnection?: (connection: any) => boolean }) {
     const [nodes, setNodesState, onNodesChangeBase] = useNodesState(initialNodes || []);
 
     // Wrapper pour empêcher la suppression des nodes avec deletable: false
@@ -46,7 +46,24 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdg
         },
         [nodes, onNodesChangeBase],
     );
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges || []);
+    const [edges, setEdges, onEdgesChangeBase] = useEdgesState(initialEdges || []);
+
+    // Wrapper pour empêcher la suppression des edges avec deletable: false
+    const onEdgesChange = useCallback(
+        (changes: any[]) => {
+            const filteredChanges = changes.filter((change: any) => {
+                if (change.type === 'remove') {
+                    const edge = edges.find((e) => e.id === change.id);
+                    if (edge?.deletable === false) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            onEdgesChangeBase(filteredChanges);
+        },
+        [edges, onEdgesChangeBase],
+    );
 
     useEffect(() => {
         if (onNodesUpdate) {
@@ -349,7 +366,7 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdg
                 });
 
                 if (edgesToRemove.length > 0) {
-                    setEdges((eds) => eds.filter((edge) => !edgesToRemove.includes(edge.id)));
+                    setEdges((eds) => eds.filter((edge) => !edgesToRemove.includes(edge.id) || edge.deletable === false));
                 }
 
                 cutState.current = { active: false, start: null, end: null };
@@ -528,7 +545,7 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdg
     }, [setEdges]);
 
     const onReconnectEnd = useCallback((_: MouseEvent | TouchEvent, edge: Edge): void => {
-        if (!edgeReconnectSuccessful.current) {
+        if (!edgeReconnectSuccessful.current && edge.deletable !== false) {
             setEdges((eds) => eds.filter((e) => e.id !== edge.id));
         }
 
@@ -688,7 +705,7 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdg
                 snapToGrid={snapToGrid}
                 snapGrid={[20, 20]}
                 onNodeClick={onNodeClick}
-                isValidConnection={isValidConnection}
+                isValidConnection={customIsValidConnection || isValidConnection}
                 fitView
             >
                 <Background />

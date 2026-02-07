@@ -1,11 +1,10 @@
 import { Plus, Trash2 } from "lucide-react";
 import Graph from "../../graphs/Graph"
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { minecraftComponents } from "../../../editors/entityEditor";
 import { Edge } from "@xyflow/react";
 import { CustomNodeType, SocketData } from "../../CustomNode";
-
-type ComponentGroupsData = Record<string, any>;
+import { ComponentGroupsData } from "../EntityEditor";
 
 const formatCOmponentGroupName = (name: string) => {
     return name.split(":")[1] || name;
@@ -91,6 +90,7 @@ const generateComponentMenuNodes = () => {
     menuItems["boolean"] = {
         type: 'custom',
         data: {
+            category: "Constant",
             label: "Boolean",
             headerColor: "#D97706",
             outputs: [{ id: "value", label: "value", type: "boolean", mode: "value" }],
@@ -101,6 +101,7 @@ const generateComponentMenuNodes = () => {
     menuItems["integer"] = {
         type: 'custom',
         data: {
+            category: "Constant",
             label: "Integer",
             headerColor: "#059669",
             outputs: [{ id: "value", label: "value", type: "integer", mode: "value" }],
@@ -111,6 +112,7 @@ const generateComponentMenuNodes = () => {
     menuItems["float"] = {
         type: 'custom',
         data: {
+            category: "Constant",
             label: "Float",
             headerColor: "#0891B2",
             outputs: [{ id: "value", label: "value", type: "float", mode: "value" }],
@@ -147,82 +149,141 @@ function getType(value: any): string {
     return typeof value;
 }
 
-function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: ComponentGroupsData }) {
+function ComponentGroupsGraph({ componentGroupsData, setComponentGroupsData }: { componentGroupsData: ComponentGroupsData, setComponentGroupsData: (data: ComponentGroupsData) => void }) {
 
     const [componentGroupsNames, setComponentGroupsNames] = useState<{ [key: string]: string }>({});
-
     const [data, setData] = useState<ComponentGroupsData>(componentGroupsData);
-    // console.log("data", data)
     const [graphNodes, setGraphNodes] = useState<CustomNodeType[]>([]);
     const [graphConnections, setGraphConnections] = useState<Edge[]>([]);
 
+    // Refs pour garder l'état le plus récent du graphe depuis les callbacks de Graph
+    const latestNodesRef = useRef<CustomNodeType[]>([]);
+    const latestEdgesRef = useRef<Edge[]>([]);
 
-    const updateGraphFromData = (data: ComponentGroupsData) => {
+    const genId = () => Date.now().toString() + Math.random().toString(36).substring(2);
+
+    const updateGraphFromData = (newData: ComponentGroupsData) => {
+        const existingNodes = latestNodesRef.current;
+        const existingEdges = latestEdgesRef.current;
+
+        // Lookup des nodes existants par groupKey / componentKey
+        const existingGroupNodes: Record<string, CustomNodeType> = {};
+        const existingCompNodes: Record<string, CustomNodeType> = {};
+        const existingCompByLabel: Record<string, CustomNodeType[]> = {};
+        const handledNodeIds = new Set<string>();
+
+        existingNodes.forEach(n => {
+            if (n.data.groupKey) {
+                existingGroupNodes[n.data.groupKey] = n;
+            }
+            if (n.data.componentKey && n.data.parentGroupKey) {
+                existingCompNodes[`${n.data.parentGroupKey}:${n.data.componentKey}`] = n;
+            }
+            // indexer par label pour réutiliser les nodes ajoutés manuellement
+            if (n.data.outputs && n.data.outputs.some((o: any) => o.type === 'component')) {
+                const label = n.data.label;
+                if (!existingCompByLabel[label]) existingCompByLabel[label] = [];
+                existingCompByLabel[label].push(n);
+            }
+
+        });
+
         const newNodes: CustomNodeType[] = [];
-        const newConnections: Edge[] = [];
+        const newEdges: Edge[] = [];
+
         let totalOffsetY = 0;
-        console.log("Updating graph from data", Object.entries(data));
-        Object.entries(data).forEach(([key, grp]: [string, any]) => {
-            const index: number = Object.keys(data).indexOf(key);
-            const groupId: string = Date.now().toString() + Math.random().toString(36).substring(2);
+
+        Object.entries(newData).forEach(([key, grp]: [string, any]) => {
+            const existing = existingGroupNodes[key];
+            const groupId = existing?.id || genId();
+            handledNodeIds.add(groupId);
+
             newNodes.push({
                 id: groupId,
-                position: { x: 100, y: totalOffsetY },
+                position: existing?.position || { x: 100, y: totalOffsetY },
                 type: 'custom',
                 data: {
                     label: componentGroupsNames[key] || formatCOmponentGroupName(key),
                     headerColor: "#CC5252",
+                    groupKey: key,
                     inputs: [{ id: "components", label: "components", type: "component", mode: "value" }],
-                    deletable: false, // Component group nodes cannot be deleted
+                    deletable: false,
                 }
             });
 
-            Object.keys(grp).forEach((componentKey: string, idx: number) => {
+            Object.keys(grp).forEach((compKey: string, idx: number) => {
+                const compLookup = `${key}:${compKey}`;
+                let existingComp = existingCompNodes[compLookup];
+                // si pas trouvé, tenter de réutiliser un node existant portant le même label non assigné
+                if (!existingComp) {
+                    const candidates = existingCompByLabel[compKey] || [];
+                    // choisir un candidat qui n'a pas déjà parentGroupKey ou qui appartient à même groupe
+                    existingComp = candidates.find(c => !c.data.parentGroupKey || c.data.parentGroupKey === key) as any;
+                }
+                const compId = existingComp?.id || genId();
+                handledNodeIds.add(compId);
+
                 newNodes.push({
-                    id: groupId + "_" + componentKey,
-                    position: { x: -100, y: totalOffsetY + idx * 75 },
+                    id: compId,
+                    position: existingComp?.position || { x: -100, y: totalOffsetY + idx * 75 },
                     type: 'custom',
                     data: {
-                        label: componentKey,
+                        label: compKey,
                         headerColor: "#7A52CC",
+                        componentKey: compKey,
+                        parentGroupKey: key,
                         outputs: [{ id: "component", label: "component", type: "component", mode: "value" }],
-                        inputs: minecraftComponents[componentKey].inputs.map((input: any) => ({
+                        inputs: minecraftComponents[compKey].inputs.map((input: any) => ({
                             id: input.name,
                             label: input.name,
                             type: typeParser(input.type),
                             mode: "value",
-                            value: grp[componentKey][input.name]
+                            value: existingComp?.data.inputs?.find((i: SocketData) => i.id === input.name)?.value ?? grp[compKey][input.name]
                         })),
                         wrapped: true,
                     }
                 });
-                newConnections.push({
-                    id: "e_" + groupId + "_" + componentKey,
-                    source: groupId + "_" + componentKey,
+
+                newEdges.push({
+                    id: `e:${groupId}:${compId}`,
+                    source: compId,
                     target: groupId,
                     sourceHandle: "component",
                     targetHandle: "components",
+                    deletable: false,
                 });
             });
-            totalOffsetY += Object.keys(grp).length * 75 + 50; // Add spacing between groups
+
+            totalOffsetY += Object.keys(grp).length * 75 + 50;
         });
+
+        // Préserver les nodes standalone (constants, etc.)
+        existingNodes.forEach(n => {
+            if (!handledNodeIds.has(n.id) && !n.data.groupKey && !n.data.componentKey) {
+                newNodes.push(n);
+            }
+        });
+
+        // Préserver les edges des nodes standalone
+        const newNodeIds = new Set(newNodes.map(n => n.id));
+        const newEdgeIds = new Set(newEdges.map(e => e.id));
+        existingEdges.forEach(e => {
+            if (!newEdgeIds.has(e.id) && newNodeIds.has(e.source) && newNodeIds.has(e.target)) {
+                newEdges.push(e);
+            }
+        });
+
         setGraphNodes(newNodes);
-        setGraphConnections(newConnections);
+        setGraphConnections(newEdges);
     };
 
     useEffect(() => {
-        // console.log("componentGroupsData", componentGroupsData);
-        updateDataFromUI(componentGroupsData);
-    }, [])
+        updateGraphFromData(componentGroupsData);
+    }, []);
 
-    // useEffect(() => {
-    //     const initial: { [key: string]: string } = {};
-    //     console.log("initial", initial)
-    //     Object.keys(componentGroupsData).forEach(k => {
-    //         initial[k] = formatCOmponentGroupName(k);
-    //     });
-    //     setComponentGroupsNames(initial);
-    // }, [componentGroupsData]);
+    useEffect(() => {
+        setComponentGroupsData(data);
+    }, [data]);
 
     // Génère le menu une seule fois
     const componentMenu = useMemo(() => generateComponentMenu(), []);
@@ -231,50 +292,69 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
     const updateDataFromGraph = (nodes: CustomNodeType[], edges: Edge[]) => {
         const newData: ComponentGroupsData = {};
 
-        // Reconstruire les groupes à partir des nœuds et des connexions
+        // Identifier les group nodes via groupKey
         nodes.forEach(node => {
-            if (node.data.inputs && node.data.inputs.some((input: any) => input.id === "components")) {
-                const groupKey = node.data.label;
-                // const groupKey = Object.keys(data)[nodes.indexOf(node)];
-                newData[groupKey] = {};
+            if (node.data.groupKey) {
+                newData[node.data.groupKey] = {};
             }
         });
 
+        // Reconstruire les relations composant→groupe depuis les edges
         edges.forEach(edge => {
             const sourceNode = nodes.find(n => n.id === edge.source);
             const targetNode = nodes.find(n => n.id === edge.target);
             if (sourceNode && targetNode && edge.sourceHandle === "component" && edge.targetHandle === "components") {
-                const groupKey = targetNode.data.label;
-                const componentKey = sourceNode.data.label;
-                newData[groupKey][componentKey] = sourceNode.data?.inputs?.reduce((acc: any, input: SocketData) => {
-                    acc[input.id] = input.value;
-                    return acc;
-                }, {});
+                const groupKey = targetNode.data.groupKey || targetNode.data.label;
+                const componentKey = sourceNode.data.componentKey || sourceNode.data.label;
+
+                if (!newData[groupKey]) return;
+
+                // Construire les valeurs d'inputs en prenant en compte les constant nodes connectés
+                const inputValues: Record<string, any> = {};
+                sourceNode.data?.inputs?.forEach((input: SocketData) => {
+                    // Vérifier si cet input a un constant node connecté
+                    const constEdge = edges.find(e => e.target === sourceNode.id && e.targetHandle === input.id);
+                    if (constEdge) {
+                        const constNode = nodes.find(n => n.id === constEdge.source);
+                        if (constNode && !constNode.data.groupKey && !constNode.data.componentKey) {
+                            const constInput = constNode.data.inputs?.find((i: SocketData) => i.id === "value");
+                            if (constInput !== undefined && constInput.value !== undefined) {
+                                inputValues[input.id] = constInput.value;
+                                return;
+                            }
+                        }
+                    }
+                    inputValues[input.id] = input.value;
+                });
+
+                newData[groupKey][componentKey] = inputValues;
             }
         });
-        // console.log("newData", newData);
-        setData(newData);
-    }
 
-    const updateDataFromUI = (data: ComponentGroupsData) => {
-        console.log("Updating data from UI", data);
-        setData(data);
-        console.log("Data updated, refreshing graph...", data   );
-        updateGraphFromData(data);
+        setData(newData);
+    };
+
+    const updateDataFromUI = (newData: ComponentGroupsData) => {
+        setData(newData);
+        updateGraphFromData(newData);
     };
 
     const updateNodes = (nodes: CustomNodeType[]) => {
-        updateDataFromGraph(nodes, graphConnections);
-        // setGraphNodes(nodes);
-    }
+        latestNodesRef.current = nodes;
+        updateDataFromGraph(nodes, latestEdgesRef.current);
+    };
 
     const updateEdges = (edges: Edge[]) => {
-        updateDataFromGraph(graphNodes, edges);
-        // setGraphConnections(edges);
-    }
+        latestEdgesRef.current = edges;
+        updateDataFromGraph(latestNodesRef.current, edges);
+    };
+
+    // Désactiver la validation de connexion stricte (parent/cycle) pour permettre
+    // de connecter un même composant à plusieurs groupes
+    const customIsValidConnection = useCallback(() => true, []);
 
     return (<>
-        <Graph initialNodes={graphNodes} initialEdges={graphConnections} menuItems={componentMenu} nodes_={componentMenuNodes} onEdgesUpdate={updateEdges} onNodesUpdate={updateNodes}></Graph>
+        <Graph initialNodes={graphNodes} initialEdges={graphConnections} menuItems={componentMenu} nodes_={componentMenuNodes} onEdgesUpdate={updateEdges} onNodesUpdate={updateNodes} customIsValidConnection={customIsValidConnection}></Graph>
 
         {/* Sidebar: Liste des events/groups */}
         <div className="w-64 bg-neutral-800 border-l border-neutral-700 overflow-y-auto p-2">
@@ -296,9 +376,20 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
                         return (
                             <div className="bg-neutral-700 rounded px-2 pb-2 text-sm pt-1 flex items-center" key={componentGroupsKey}>
                                 <input className="text-sm text-neutral-400 focus:outline-none w-full" spellCheck={false} value={componentGroupsNames[componentGroupsKey] || componentGroupsKey} onChange={(event) => {
-                                    const prevNames = { ...componentGroupsNames };
-                                    prevNames[componentGroupsKey] = event.target.value;
-                                    setComponentGroupsNames(prevNames);
+                                    const newName = event.target.value;
+                                    setComponentGroupsNames(prev => ({
+                                        ...prev,
+                                        [componentGroupsKey]: newName,
+                                    }));
+
+                                    // Mettre à jour le label du node dans le graphe en temps réel
+                                    const updatedNodes = latestNodesRef.current.map(n => {
+                                        if (n.data.groupKey === componentGroupsKey) {
+                                            return { ...n, data: { ...n.data, label: newName } };
+                                        }
+                                        return n;
+                                    });
+                                    setGraphNodes(updatedNodes);
                                 }}
 
                                     onBlur={() => {
@@ -308,9 +399,11 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
                                             delete next[componentGroupsKey];
                                             return next;
                                         });
+
+                                        if (newKey === componentGroupsKey) return;
+
                                         let next = { ...data };
-                                        if (next[componentGroupsKey] === undefined) return next;
-                                        if (newKey === componentGroupsKey) return next;
+                                        if (next[componentGroupsKey] === undefined) return;
 
                                         const replaceKeyPreserveOrder = (obj: Record<string, any>, oldK: string, newK: string) => {
                                             if (!Object.prototype.hasOwnProperty.call(obj, oldK)) return obj;
@@ -321,7 +414,19 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
                                             return res;
                                         };
 
-                                        next = replaceKeyPreserveOrder(next, componentGroupsKey, newKey)
+                                        next = replaceKeyPreserveOrder(next, componentGroupsKey, newKey);
+
+                                        // Mettre à jour les groupKey/parentGroupKey dans les refs avant de régénérer
+                                        latestNodesRef.current = latestNodesRef.current.map(n => {
+                                            if (n.data.groupKey === componentGroupsKey) {
+                                                return { ...n, data: { ...n.data, groupKey: newKey, label: newKey } };
+                                            }
+                                            if (n.data.parentGroupKey === componentGroupsKey) {
+                                                return { ...n, data: { ...n.data, parentGroupKey: newKey } };
+                                            }
+                                            return n;
+                                        });
+
                                         updateDataFromUI(next);
                                     }}
 

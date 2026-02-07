@@ -21,6 +21,9 @@ export type CustomNodeData = {
   name?: string;
   wrapped?: boolean;
   deletable?: boolean; // Si false, le node ne peut pas être supprimé
+  groupKey?: string; // Clé du component group dans les données
+  componentKey?: string; // Clé du composant dans les données
+  parentGroupKey?: string; // Clé du group parent pour les composants
   onDataChange?: (socketId: string, value: string | Record<string, string>, isOutput: boolean) => void;
 };
 
