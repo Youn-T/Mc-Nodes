@@ -157,10 +157,11 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
     const [graphConnections, setGraphConnections] = useState<Edge[]>([]);
 
 
-    const updateGraphFromData = () => {
+    const updateGraphFromData = (data: ComponentGroupsData) => {
         const newNodes: CustomNodeType[] = [];
         const newConnections: Edge[] = [];
         let totalOffsetY = 0;
+        console.log("Updating graph from data", Object.entries(data));
         Object.entries(data).forEach(([key, grp]: [string, any]) => {
             const index: number = Object.keys(data).indexOf(key);
             const groupId: string = Date.now().toString() + Math.random().toString(36).substring(2);
@@ -256,8 +257,10 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
     }
 
     const updateDataFromUI = (data: ComponentGroupsData) => {
+        console.log("Updating data from UI", data);
         setData(data);
-        updateGraphFromData();
+        console.log("Data updated, refreshing graph...", data   );
+        updateGraphFromData(data);
     };
 
     const updateNodes = (nodes: CustomNodeType[]) => {
@@ -325,16 +328,16 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
                                 />
 
                                 <Trash2 className="w-4 h-4 text-neutral-400 cursor-pointer hover:text-red-500 transition-colors" onClick={() => {
-                                    setData((prev: any) => {
-                                        const next = { ...prev };
-                                        delete next[componentGroupsKey];
-                                        return next;
-                                    });
                                     setComponentGroupsNames(prev => {
                                         const next = { ...prev };
                                         delete next[componentGroupsKey];
                                         return next;
                                     });
+
+                                    const next = { ...data };
+                                    delete next[componentGroupsKey];
+                                    updateDataFromUI(next);
+
                                 }}></Trash2>
 
                             </div>
