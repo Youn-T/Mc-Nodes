@@ -370,7 +370,7 @@ const recursivelyAddItems = (menuAcc: menuOption[][], itemMenu: string[], itemNo
         const existingOptions = menuAcc[menuAcc.indexOf(existingMenuDivision)][existingMenuDivision.indexOf(existingCategory)].options || [[]]
         menuAcc[menuAcc.indexOf(existingMenuDivision)][existingMenuDivision.indexOf(existingCategory)].options = recursivelyAddItems(existingOptions, itemMenu.slice(1), itemNode)
     } else {
-        console.log(itemMenu, menuAcc, itemNode)
+        // console.log(itemMenu, menuAcc, itemNode)
 
 
         if (itemMenu.length < 1) {
@@ -382,7 +382,7 @@ const recursivelyAddItems = (menuAcc: menuOption[][], itemMenu: string[], itemNo
             if (index >= menuAcc.length) {
                 menuAcc.push([])
             }
-            console.log(index, menuAcc)
+            // console.log(index, menuAcc)
             menuAcc[index].push({ name: itemNode, node: getItemId(itemNode) })
 
         } else {

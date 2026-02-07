@@ -27,7 +27,7 @@ const nodeTypes = {
 
 const panOnDrag = [1]; // Seulement le clic molette pour React Flow, on gère le clic droit manuellement
 
-function Graph({ initialNodes, initialEdges, className, menuItems, nodes_ }: { initialNodes?: CustomNodeType[], initialEdges?: Edge[], className?: string, menu_?: any, menuItems?: any, nodes_?: any }) {
+function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdgesUpdate, onNodesUpdate }: { initialNodes?: CustomNodeType[], initialEdges?: Edge[], className?: string, menu_?: any, menuItems?: any, nodes_?: any, onNodesUpdate?: (nodes: CustomNodeType[]) => void, onEdgesUpdate?: (nodes: Edge[]) => void }) {
     const [nodes, setNodesState, onNodesChangeBase] = useNodesState(initialNodes || []);
 
     // Wrapper pour empêcher la suppression des nodes avec deletable: false
@@ -47,6 +47,18 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_ }: { i
         [nodes, onNodesChangeBase],
     );
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges || []);
+
+    useEffect(() => {
+        if (onNodesUpdate) {
+            onNodesUpdate(nodes);
+        }
+    }, [nodes]);
+
+    useEffect(() => {
+        if (onEdgesUpdate) {    
+            onEdgesUpdate(edges);
+        }
+    }, [edges]); 
 
     useEffect(() => {
         if (initialNodes) {
@@ -273,8 +285,8 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_ }: { i
                         if (!pane) return;
 
                         // Calculer la position en coordonnées flow
-                        console.log(pane);
-                        console.log(event.clientY - pane.y, event.clientX - pane.x);
+                        // console.log(pane);
+                        // console.log(event.clientY - pane.y, event.clientX - pane.x);
 
                         setMenu({
                             id: "pane",
@@ -436,7 +448,14 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_ }: { i
 
             const previousEdges = edges.filter(e => (e.target === connection.target && e.targetHandle === connection.targetHandle));
 
-            setEdges((eds) => (addEdge(connection, eds)).filter(e => !previousEdges.includes(e)));
+            if (targetHandle?.type === SocketType.COMPONENT) {
+                setEdges((eds) => (addEdge(connection, eds)));
+
+            } else {
+                setEdges((eds) => (addEdge(connection, eds)).filter(e => !previousEdges.includes(e)));
+
+            }
+
 
         },
         [setEdges, nodes, edges],
@@ -621,7 +640,7 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_ }: { i
             const ins = edges.filter(edge => edge.target === source?.id) // BRICLOAGE
 
 
-            console.log("isValidConnection", connection, "hasCycle?",(connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true));
+            // console.log("isValidConnection", connection, "hasCycle?", (connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true));
 
             return !hasCycle(target) && ((connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true) || (ins.length === 0 && outs.length === 0));
 

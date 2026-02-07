@@ -1,7 +1,9 @@
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import Graph from "../../graphs/Graph"
 import { useState, useEffect, useMemo } from "react";
 import { minecraftComponents } from "../../../editors/entityEditor";
+import { Edge } from "@xyflow/react";
+import { CustomNodeType, SocketData } from "../../CustomNode";
 
 type ComponentGroupsData = Record<string, any>;
 
@@ -84,7 +86,7 @@ const typeParser = (value: any): string => {
 }
 
 const generateComponentMenuNodes = () => {
-    const menuItems: Record<string, any> = {}; 
+    const menuItems: Record<string, any> = {};
 
     menuItems["boolean"] = {
         type: 'custom',
@@ -118,23 +120,23 @@ const generateComponentMenuNodes = () => {
     };
 
     Object.entries(minecraftComponents).forEach(([key, component]) => (
-        
+
         menuItems[key.toLocaleLowerCase()] = {
-        type: 'custom',
-        data: {
-            label: key.toLowerCase(),
-            headerColor: "#7A52CC",
-            outputs: [{ id: "component", label: "component", type: "component", mode: "value" }],
-            inputs: component.inputs.map((input: any) => ({
-                id: input.name,
-                label: input.name,
-                type: typeParser(input.type),
-                mode: "value",
-                value: input.default
-            })),
-            wrapped: true,
-        }
-    }));
+            type: 'custom',
+            data: {
+                label: key.toLowerCase(),
+                headerColor: "#7A52CC",
+                outputs: [{ id: "component", label: "component", type: "component", mode: "value" }],
+                inputs: component.inputs.map((input: any) => ({
+                    id: input.name,
+                    label: input.name,
+                    type: typeParser(input.type),
+                    mode: "value",
+                    value: input.default
+                })),
+                wrapped: true,
+            }
+        }));
 
     // Retourne le menu au format attendu par Graph (tableau de groupes)
     return menuItems;
@@ -150,14 +152,14 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
     const [componentGroupsNames, setComponentGroupsNames] = useState<{ [key: string]: string }>({});
 
     const [data, setData] = useState<ComponentGroupsData>(componentGroupsData);
+    // console.log("data", data)
+    const [graphNodes, setGraphNodes] = useState<CustomNodeType[]>([]);
+    const [graphConnections, setGraphConnections] = useState<Edge[]>([]);
 
-    const [graphNodes, setGraphNodes] = useState<any[]>([]);
-    const [graphConnections, setGraphConnections] = useState<any[]>([]);
 
-
-    useEffect(() => {
-        const newNodes: any[] = [];
-        const newConnections: any[] = [];
+    const updateGraphFromData = () => {
+        const newNodes: CustomNodeType[] = [];
+        const newConnections: Edge[] = [];
         let totalOffsetY = 0;
         Object.entries(data).forEach(([key, grp]: [string, any]) => {
             const index: number = Object.keys(data).indexOf(key);
@@ -205,7 +207,12 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
         });
         setGraphNodes(newNodes);
         setGraphConnections(newConnections);
-    }, [data, componentGroupsNames]);
+    };
+
+    useEffect(() => {
+        // console.log("componentGroupsData", componentGroupsData);
+        updateDataFromUI(componentGroupsData);
+    }, [])
 
     // useEffect(() => {
     //     const initial: { [key: string]: string } = {};
@@ -220,28 +227,71 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
     const componentMenu = useMemo(() => generateComponentMenu(), []);
     const componentMenuNodes = useMemo(() => generateComponentMenuNodes(), []);
 
+    const updateDataFromGraph = (nodes: CustomNodeType[], edges: Edge[]) => {
+        const newData: ComponentGroupsData = {};
+
+        // Reconstruire les groupes à partir des nœuds et des connexions
+        nodes.forEach(node => {
+            if (node.data.inputs && node.data.inputs.some((input: any) => input.id === "components")) {
+                const groupKey = node.data.label;
+                // const groupKey = Object.keys(data)[nodes.indexOf(node)];
+                newData[groupKey] = {};
+            }
+        });
+
+        edges.forEach(edge => {
+            const sourceNode = nodes.find(n => n.id === edge.source);
+            const targetNode = nodes.find(n => n.id === edge.target);
+            if (sourceNode && targetNode && edge.sourceHandle === "component" && edge.targetHandle === "components") {
+                const groupKey = targetNode.data.label;
+                const componentKey = sourceNode.data.label;
+                newData[groupKey][componentKey] = sourceNode.data?.inputs?.reduce((acc: any, input: SocketData) => {
+                    acc[input.id] = input.value;
+                    return acc;
+                }, {});
+            }
+        });
+        // console.log("newData", newData);
+        setData(newData);
+    }
+
+    const updateDataFromUI = (data: ComponentGroupsData) => {
+        setData(data);
+        updateGraphFromData();
+    };
+
+    const updateNodes = (nodes: CustomNodeType[]) => {
+        updateDataFromGraph(nodes, graphConnections);
+        // setGraphNodes(nodes);
+    }
+
+    const updateEdges = (edges: Edge[]) => {
+        updateDataFromGraph(graphNodes, edges);
+        // setGraphConnections(edges);
+    }
+
     return (<>
-        <Graph initialNodes={graphNodes} initialEdges={graphConnections} menuItems={componentMenu} nodes_={componentMenuNodes}></Graph>
+        <Graph initialNodes={graphNodes} initialEdges={graphConnections} menuItems={componentMenu} nodes_={componentMenuNodes} onEdgesUpdate={updateEdges} onNodesUpdate={updateNodes}></Graph>
 
         {/* Sidebar: Liste des events/groups */}
         <div className="w-64 bg-neutral-800 border-l border-neutral-700 overflow-y-auto p-2">
             <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2 flex items-center justify-between ">Component Groups <Plus className="w-4 h-4 font-bold" onClick={(e) => {
                 e.stopPropagation();
-                
+
                 const next = { ...data };
                 let keyIdx = 1;
                 while (next.hasOwnProperty("new_component_group_" + keyIdx)) { keyIdx++; }
                 next[("new_component_group_" + keyIdx)] = {};
-                
-                setData(next);
+
+                updateDataFromUI(next);
             }}></Plus></div>
-            
+
             <div className="flex flex-col gap-2">
                 {
                     Object.keys(data).map((componentGroupsKey: string) => {
 
                         return (
-                            <div className="bg-neutral-700 rounded px-2 pb-2 text-sm pt-1" key={componentGroupsKey}>
+                            <div className="bg-neutral-700 rounded px-2 pb-2 text-sm pt-1 flex items-center" key={componentGroupsKey}>
                                 <input className="text-sm text-neutral-400 focus:outline-none w-full" spellCheck={false} value={componentGroupsNames[componentGroupsKey] || componentGroupsKey} onChange={(event) => {
                                     const prevNames = { ...componentGroupsNames };
                                     prevNames[componentGroupsKey] = event.target.value;
@@ -255,28 +305,37 @@ function ComponentGroupsGraph({ componentGroupsData }: { componentGroupsData: Co
                                             delete next[componentGroupsKey];
                                             return next;
                                         });
-                                        setData((prev: any) => {
-                                            let next = { ...prev };
-                                            if (next[componentGroupsKey] === undefined) return next;
-                                            if (newKey === componentGroupsKey) return next;
+                                        let next = { ...data };
+                                        if (next[componentGroupsKey] === undefined) return next;
+                                        if (newKey === componentGroupsKey) return next;
 
-                                            const replaceKeyPreserveOrder = (obj: Record<string, any>, oldK: string, newK: string) => {
-                                                if (!Object.prototype.hasOwnProperty.call(obj, oldK)) return obj;
-                                                const entries = Object.entries(obj);
-                                                const newEntries = entries.map(([k, v]) => k === oldK ? [newK, v] : [k, v]);
-                                                const res: Record<string, any> = {};
-                                                newEntries.forEach(([k, v]) => { res[k] = v; });
-                                                return res;
-                                            };
+                                        const replaceKeyPreserveOrder = (obj: Record<string, any>, oldK: string, newK: string) => {
+                                            if (!Object.prototype.hasOwnProperty.call(obj, oldK)) return obj;
+                                            const entries = Object.entries(obj);
+                                            const newEntries = entries.map(([k, v]) => k === oldK ? [newK, v] : [k, v]);
+                                            const res: Record<string, any> = {};
+                                            newEntries.forEach(([k, v]) => { res[k] = v; });
+                                            return res;
+                                        };
 
-                                            next = replaceKeyPreserveOrder(next, componentGroupsKey, newKey)
-                                            return next;
-                                        });
+                                        next = replaceKeyPreserveOrder(next, componentGroupsKey, newKey)
+                                        updateDataFromUI(next);
                                     }}
 
                                 />
 
-
+                                <Trash2 className="w-4 h-4 text-neutral-400 cursor-pointer hover:text-red-500 transition-colors" onClick={() => {
+                                    setData((prev: any) => {
+                                        const next = { ...prev };
+                                        delete next[componentGroupsKey];
+                                        return next;
+                                    });
+                                    setComponentGroupsNames(prev => {
+                                        const next = { ...prev };
+                                        delete next[componentGroupsKey];
+                                        return next;
+                                    });
+                                }}></Trash2>
 
                             </div>
                         )

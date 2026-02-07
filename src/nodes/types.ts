@@ -16,6 +16,7 @@ export enum SocketType {
     ROTATION = 'rotation',
     CAMERA = 'camera',
     SCOREBOARD_OBJECTIVE = 'scoreboard_objective',
+    COMPONENT = 'component',
     OTHER = 'other',
 }
 

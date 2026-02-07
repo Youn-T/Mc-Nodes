@@ -135,7 +135,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                     try {
                         const blob: Blob = model.blob as Blob;
                         const text = await blob.text();
-                        console.log(text);
+                        // console.log(text);
                         const json = JSON.parse(text);
                         json["minecraft:geometry"].forEach((element: any) => {
                             modelsOpts.push(element.description.identifier.replace("geometry.", ""));
@@ -233,7 +233,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
 
                 const parsedEntity = parsedBeh["minecraft:entity"] || {};
                 const parsedClient = parsedRes["minecraft:client_entity"] || {};
-                console.log("events",parsedEntity?.events)
+                // console.log("events",parsedEntity?.events)
                 setEntityData(parsedEntity);
                 setClientData(parsedClient);
                 const newEntityData: EntityData = entityData
@@ -246,7 +246,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                 newEntityData.componentGroups = parseComponentGroups(parsedEntity?.component_groups || {});
                 newEntityData.events = /*parseEvents(*/parsedEntity?.events || {}/* )*/;
                 setUserEntityData(newEntityData);
-                console.log('Loaded entity data', userEntityData, parsedEntity);
+                // console.log('Loaded entity data', userEntityData, parsedEntity);
             } catch (err) {
                 console.log('Error loading entity data', err);
             }
@@ -376,12 +376,12 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                                 <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2 flex items-center justify-between ">Geometry <Plus className="w-4 h-4 font-bold" onClick={(e) => {
                                     e.stopPropagation();
                                     console.trace()
-                                    console.log('Adding new geometry entry');
+                                    // console.log('Adding new geometry entry');
 
                                     const next = { ...clientData };
                                     let keyIdx = 1;
                                     while (next.description.geometry.hasOwnProperty("new_geometry_" + keyIdx)) { keyIdx++; }
-                                    console.log(next)
+                                    // console.log(next)
                                     next.description.geometry["new_geometry_" + keyIdx] = modelGeometryOptions[0] || "geometry.unknown";
                                     // next.description.geometry["new_geometry_" + keyIdx] = ;
 
@@ -453,7 +453,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
 
                                     {
                                         Object.keys(clientData?.description?.textures || {}).map((key) => {
-                                            console.log('Rendering texture key:', clientData?.description?.textures[key]);
+                                            // console.log('Rendering texture key:', clientData?.description?.textures[key]);
                                             return (
                                                 <div className="bg-neutral-700 rounded px-2  text-sm py-1 flex items-center gap-2 " key={key}>
                                                     <img className="w-11 h-11 bg-neutral-600 rounded flex-shrink-0 " style={{ imageRendering: 'pixelated' }} src={data.browser.textures.find(img => img.name.split("/").slice(1).join("/").replace(".png", "") === clientData?.description?.textures[key])?.url}></img>
@@ -537,7 +537,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                                                         <BasicSelector options={/*alphabeticalSort(modelGeometryOptions)*/texturesOptions} value={(clientData?.description?.textures[key]).split("/").slice(1).join("/")/*clientData?.description?.geometry?.[key].replace("geometry.", "") || ""*/} onChange={(newValue: any) => {
                                                             setClientData((prev: any) => {
                                                                 const next = { ...prev };
-                                                                console.log('Updating texture', key, "(next.description.textures[key])", next.description.textures[key], 'to', newValue);
+                                                                // console.log('Updating texture', key, "(next.description.textures[key])", next.description.textures[key], 'to', newValue);
                                                                 next.description.textures[key] = "textures/" + newValue;
                                                                 return next;
                                                             });

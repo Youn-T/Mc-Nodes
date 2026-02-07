@@ -11,7 +11,7 @@ function Workspace({ selected, data }: { selected: { tab: string, section?: stri
     if (!selected) {
         return <div className="flex-1 bg-neutral-900 flex items-center justify-center flex-col"><div className="text-neutral-200 text-3xl font-semibold">No item selected</div><div className="text-neutral-400 text-xl">Please select an item from the navbar to begin</div></div>;
     }
-    console.log('Workspace received selected item:', selected);
+    // console.log('Workspace received selected item:', selected);
     // if (selected.tab === 'content browser') {
     switch (selected.section) {
         case 'textures':
@@ -21,7 +21,7 @@ function Workspace({ selected, data }: { selected: { tab: string, section?: stri
         case 'audio':
             return <AudioPreview asset={selected.item} />;
         case 'entities':
-            return <EntityEditor asset={selected.item} data={data} onChange={(data) => { console.log(data)}} />;
+            return <EntityEditor asset={selected.item} data={data} onChange={(data) => { /*console.log(data)*/}} />;
         // }
     }
 
