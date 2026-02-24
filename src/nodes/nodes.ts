@@ -1,40 +1,16 @@
 // ==========================================
 // UTILS
 // ==========================================
-import { SocketMode, SocketType, rawNode } from './types';
+import { SocketMode, SocketType } from '../types/nodes';
+import type { NodeDefinition } from '../types/nodes';
+import type { ProcessedNode } from '../types/graph';
 import { minecraftNodes } from './minecraftNodes';
 import { eventNodes } from './eventNodes';
+import { nodeColors } from '../constants/colors';
+import { socketDefaultValue } from '../constants/socketDefaults';
 
-const nodeColors: Record<string, string> = {
-    'World': "#CD7B52",
-    'System': "#CCA352",
-    'Entity': "#A3CC52",
-    'Player': "#52CC52",
-    'Block': "#7A52CC",
-    'Dimension': "#CCCC52",
-    'Item': "#A352CC",
-    'Scoreboard': "#CC52CC",
-    'Event': "#CC5252",
-    'Math': "#5252CC",
-    'Constant': "#52CCA3",
-    'Logic': "#52CCCC",
-    'Flow': "#52A3CC",
-    'Vector': "#527ACC",
-    'String': "#7ACC52",
-    "Array": "#CC52A3",
-    'Variables': "#52CC7A"
-}
-
-const getItemId = (name: string) => {
+const getItemId = (name: string): string => {
     return name.toLowerCase().replace(/\s+/g, '_');
-}
-
-const socketDefaultValue = {
-    boolean: false,
-    integer: 0,
-    float: 0.0,
-    string: "",
-    vector: 0,
 }
 
 // ==========================================
@@ -49,7 +25,7 @@ const socketDefaultValue = {
     - you should define a type for each input/output in value mode (not needed for trigger mode)
     -you can override the default header color by defining a color property
 */
-export const rawNodes: rawNode[] = [
+export const rawNodes: NodeDefinition[] = [
     ...minecraftNodes,
     {
         name: 'give item',
@@ -298,45 +274,52 @@ export const rawNodes: rawNode[] = [
 // ==========================================
 // NODES EXPORT
 // ==========================================
-export const nodes: Record<string, node> = rawNodes.reduce((obj: Record<string, node>, item: rawNode) => {
-    const id = getItemId(item.name);
-    obj[id] = {
-        type: 'custom',
-        data: {
-            label: item.label ? item.label : item.name.replace(/\b\w/g, c => c.toUpperCase()),
-            inputs: item.inputs.map((input) => ({ id: input.name.toLowerCase().replace(/\s+/g, '_'), label: input.name.replace(/\s+/g, '_'), mode: input.mode, type: input.type, ...(socketDefaultValue.hasOwnProperty(input.type as string) && { value: socketDefaultValue[input.type as keyof typeof socketDefaultValue] }) })),
-            outputs: item.outputs.map((output) => ({ id: output.name.toLowerCase().replace(/\s+/g, '_'), label: output.name.replace(/\s+/g, '_'), mode: output.mode, type: output.type, ...(socketDefaultValue.hasOwnProperty(output.type as string) && { value: socketDefaultValue[output.type as keyof typeof socketDefaultValue] }) })),
-            headerColor: item.color ? item.color : nodeColors[item.menu[0]],
-            category: item.menu[0],
-            name: item.name
-        }
-    }
-    return obj;
-}, {} as Record<string, node>);
-
-type node = {
-    type: string;
-    data: {
-        label: string;
-        inputs: { id: string; label: string; mode?: SocketMode; type?: SocketType }[];
-        outputs: { id: string; label: string; mode?: SocketMode; type?: SocketType }[];
-        headerColor?: string;
-        category: string;
-        name?: string;
-    }
-}
+export const nodes: Record<string, ProcessedNode> = rawNodes.reduce(
+    (obj: Record<string, ProcessedNode>, item: NodeDefinition) => {
+        const id = getItemId(item.name);
+        obj[id] = {
+            type: 'custom',
+            data: {
+                label: item.label ?? item.name.replace(/\b\w/g, c => c.toUpperCase()),
+                inputs: item.inputs.map((input) => ({
+                    id: input.name.toLowerCase().replace(/\s+/g, '_'),
+                    label: input.name.replace(/\s+/g, '_'),
+                    mode: input.mode,
+                    type: input.type ?? SocketType.OTHER,
+                    ...(Object.prototype.hasOwnProperty.call(socketDefaultValue, input.type as string) && {
+                        value: socketDefaultValue[input.type as string],
+                    }),
+                })),
+                outputs: item.outputs.map((output) => ({
+                    id: output.name.toLowerCase().replace(/\s+/g, '_'),
+                    label: output.name.replace(/\s+/g, '_'),
+                    mode: output.mode,
+                    type: output.type ?? SocketType.OTHER,
+                    ...(Object.prototype.hasOwnProperty.call(socketDefaultValue, output.type as string) && {
+                        value: socketDefaultValue[output.type as string],
+                    }),
+                })),
+                headerColor: item.color ?? nodeColors[item.menu[0]],
+                category: item.menu[0],
+                name: item.name,
+            },
+        };
+        return obj;
+    },
+    {} as Record<string, ProcessedNode>,
+);
 
 // ==========================================
 // CONTEXTUAL MENU EXPORT
 // ==========================================
 
-type menuOption = {
+export interface MenuOption {
     name: string;
     node?: string;
-    options?: menuOption[][];
+    options?: MenuOption[][];
 }
 
-const initialMenu: menuOption[][] = [
+const initialMenu: MenuOption[][] = [
     [
         { name: "Event", options: [[]] },
         { name: "System", options: [[]] },
@@ -362,7 +345,7 @@ const initialMenu: menuOption[][] = [
     ],
 ]
 
-const recursivelyAddItems = (menuAcc: menuOption[][], itemMenu: string[], itemNode: string) => {
+const recursivelyAddItems = (menuAcc: MenuOption[][], itemMenu: string[], itemNode: string): MenuOption[][] => {
     const existingMenuDivision = menuAcc.find(div => div.find(cat => cat.name === itemMenu[0]) !== undefined)
     const existingCategory = existingMenuDivision ? existingMenuDivision.find(cat => cat.name === itemMenu[0]) : undefined
     if (existingCategory && existingMenuDivision) {
@@ -397,7 +380,7 @@ const recursivelyAddItems = (menuAcc: menuOption[][], itemMenu: string[], itemNo
     return menuAcc
 }
 
-export const menu: menuOption[][] = rawNodes.reduce((menuAcc: menuOption[][], item: rawNode) => {
+export const menu: MenuOption[][] = rawNodes.reduce((menuAcc: MenuOption[][], item: NodeDefinition) => {
     const itemMenu = item.menu;
     const itemNode = item.name;
 

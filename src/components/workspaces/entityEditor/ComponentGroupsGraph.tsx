@@ -5,6 +5,7 @@ import { minecraftComponents } from "../../../editors/entityEditor";
 import { Edge } from "@xyflow/react";
 import { CustomNodeType, SocketData } from "../../CustomNode";
 import { ComponentGroupsData } from "../EntityEditor";
+import { SocketMode, SocketType } from "../../../types/nodes";
 
 const formatCOmponentGroupName = (name: string) => {
     return name.split(":")[1] || name;
@@ -12,19 +13,19 @@ const formatCOmponentGroupName = (name: string) => {
 
 // Génère le menu dynamique à partir des minecraftComponents
 const generateComponentMenu = () => {
-    const menuItems = Object.entries(minecraftComponents).map(([key, component]) => ({
+    const menuItems = Object.entries(minecraftComponents).map(([key, _component]) => ({
         name: key.toLocaleLowerCase(),
         node: {
             type: 'custom',
             data: {
                 label: key,
                 headerColor: "#7A52CC",
-                outputs: [{ id: "component", label: "component", type: "component", mode: "value" }],
+                outputs: [{ id: "component", label: "component", type: SocketType.COMPONENT, mode: SocketMode.VALUE }],
                 inputs: minecraftComponents[key].inputs.map((input: any) => ({
                     id: input.name,
                     label: input.name,
                     type: typeParser(input.type),
-                    mode: "value",
+                    mode: SocketMode.VALUE,
                     value: input.default
                 })),
                 wrapped: true,
@@ -41,7 +42,7 @@ const generateComponentMenu = () => {
                     category: "Constant",
                     label: "Boolean",
                     headerColor: "#D97706",
-                    outputs: [{ id: "value", label: "value", type: "boolean", mode: "value" }],
+                    outputs: [{ id: "value", label: "value", type: SocketType.BOOL, mode: SocketMode.VALUE }],
                     wrapped: true,
                 }
             }
@@ -54,7 +55,7 @@ const generateComponentMenu = () => {
                     category: "Constant",
                     label: "Integer",
                     headerColor: "#059669",
-                    outputs: [{ id: "value", label: "value", type: "integer", mode: "value" }],
+                    outputs: [{ id: "value", label: "value", type: SocketType.INT, mode: SocketMode.VALUE }],
                     wrapped: true,
                 }
             }
@@ -67,7 +68,7 @@ const generateComponentMenu = () => {
                     category: "Constant",
                     label: "Float",
                     headerColor: "#0891B2",
-                    outputs: [{ id: "value", label: "value", type: "float", mode: "value" }],
+                    outputs: [{ id: "value", label: "value", type: SocketType.FLOAT, mode: SocketMode.VALUE }],
                     wrapped: true,
                 }
             }
@@ -93,8 +94,8 @@ const generateComponentMenuNodes = () => {
             category: "Constant",
             label: "Boolean",
             headerColor: "#D97706",
-            outputs: [{ id: "value", label: "value", type: "boolean", mode: "value" }],
-            inputs: [{ id: "value", label: "value", type: "boolean", mode: "value", value: false }],
+            outputs: [{ id: "value", label: "value", type: SocketType.BOOL, mode: SocketMode.VALUE }],
+            inputs: [{ id: "value", label: "value", type: SocketType.BOOL, mode: SocketMode.VALUE, value: false }],
             wrapped: true,
         }
     };
@@ -104,8 +105,8 @@ const generateComponentMenuNodes = () => {
             category: "Constant",
             label: "Integer",
             headerColor: "#059669",
-            outputs: [{ id: "value", label: "value", type: "integer", mode: "value" }],
-            inputs: [{ id: "value", label: "value", type: "integer", mode: "value", value: 0 }],
+            outputs: [{ id: "value", label: "value", type: SocketType.INT, mode: SocketMode.VALUE }],
+            inputs: [{ id: "value", label: "value", type: SocketType.INT, mode: SocketMode.VALUE, value: 0 }],
             wrapped: true,
         }
     };
@@ -115,8 +116,8 @@ const generateComponentMenuNodes = () => {
             category: "Constant",
             label: "Float",
             headerColor: "#0891B2",
-            outputs: [{ id: "value", label: "value", type: "float", mode: "value" }],
-            inputs: [{ id: "value", label: "value", type: "float", mode: "value", value: 0.0 }],
+            outputs: [{ id: "value", label: "value", type: SocketType.FLOAT, mode: SocketMode.VALUE }],
+            inputs: [{ id: "value", label: "value", type: SocketType.FLOAT, mode: SocketMode.VALUE, value: 0.0 }],
             wrapped: true,
         }
     };
@@ -128,12 +129,12 @@ const generateComponentMenuNodes = () => {
             data: {
                 label: key.toLowerCase(),
                 headerColor: "#7A52CC",
-                outputs: [{ id: "component", label: "component", type: "component", mode: "value" }],
+                outputs: [{ id: "component", label: "component", type: SocketType.COMPONENT, mode: SocketMode.VALUE }],
                 inputs: component.inputs.map((input: any) => ({
                     id: input.name,
                     label: input.name,
                     type: typeParser(input.type),
-                    mode: "value",
+                    mode: SocketMode.VALUE,
                     value: input.default
                 })),
                 wrapped: true,
@@ -143,11 +144,6 @@ const generateComponentMenuNodes = () => {
     // Retourne le menu au format attendu par Graph (tableau de groupes)
     return menuItems;
 };
-
-function getType(value: any): string {
-    if (typeof value === 'number') return "float";
-    return typeof value;
-}
 
 function ComponentGroupsGraph({ componentGroupsData, setComponentGroupsData }: { componentGroupsData: ComponentGroupsData, setComponentGroupsData: (data: ComponentGroupsData) => void }) {
 
@@ -174,13 +170,13 @@ function ComponentGroupsGraph({ componentGroupsData, setComponentGroupsData }: {
 
         existingNodes.forEach(n => {
             if (n.data.groupKey) {
-                existingGroupNodes[n.data.groupKey] = n;
+                existingGroupNodes[n.data.groupKey as string] = n;
             }
             if (n.data.componentKey && n.data.parentGroupKey) {
-                existingCompNodes[`${n.data.parentGroupKey}:${n.data.componentKey}`] = n;
+                existingCompNodes[`${n.data.parentGroupKey as string}:${n.data.componentKey as string}`] = n;
             }
             // indexer par label pour réutiliser les nodes ajoutés manuellement
-            if (n.data.outputs && n.data.outputs.some((o: any) => o.type === 'component')) {
+            if (n.data.outputs && n.data.outputs.some((o: any) => o.type === SocketType.COMPONENT)) {
                 const label = n.data.label;
                 if (!existingCompByLabel[label]) existingCompByLabel[label] = [];
                 existingCompByLabel[label].push(n);
@@ -206,7 +202,7 @@ function ComponentGroupsGraph({ componentGroupsData, setComponentGroupsData }: {
                     label: componentGroupsNames[key] || formatCOmponentGroupName(key),
                     headerColor: "#CC5252",
                     groupKey: key,
-                    inputs: [{ id: "components", label: "components", type: "component", mode: "value" }],
+                    inputs: [{ id: "components", label: "components", type: SocketType.COMPONENT, mode: SocketMode.VALUE }],
                     deletable: false,
                 }
             });
@@ -232,12 +228,12 @@ function ComponentGroupsGraph({ componentGroupsData, setComponentGroupsData }: {
                         headerColor: "#7A52CC",
                         componentKey: compKey,
                         parentGroupKey: key,
-                        outputs: [{ id: "component", label: "component", type: "component", mode: "value" }],
+                        outputs: [{ id: "component", label: "component", type: SocketType.COMPONENT, mode: SocketMode.VALUE }],
                         inputs: minecraftComponents[compKey].inputs.map((input: any) => ({
                             id: input.name,
                             label: input.name,
                             type: typeParser(input.type),
-                            mode: "value",
+                            mode: SocketMode.VALUE,
                             value: existingComp?.data.inputs?.find((i: SocketData) => i.id === input.name)?.value ?? grp[compKey][input.name]
                         })),
                         wrapped: true,
@@ -295,7 +291,7 @@ function ComponentGroupsGraph({ componentGroupsData, setComponentGroupsData }: {
         // Identifier les group nodes via groupKey
         nodes.forEach(node => {
             if (node.data.groupKey) {
-                newData[node.data.groupKey] = {};
+                newData[node.data.groupKey as string] = {};
             }
         });
 
@@ -304,8 +300,8 @@ function ComponentGroupsGraph({ componentGroupsData, setComponentGroupsData }: {
             const sourceNode = nodes.find(n => n.id === edge.source);
             const targetNode = nodes.find(n => n.id === edge.target);
             if (sourceNode && targetNode && edge.sourceHandle === "component" && edge.targetHandle === "components") {
-                const groupKey = targetNode.data.groupKey || targetNode.data.label;
-                const componentKey = sourceNode.data.componentKey || sourceNode.data.label;
+                const groupKey = (targetNode.data.groupKey as string) || targetNode.data.label;
+                const componentKey = (sourceNode.data.componentKey as string) || sourceNode.data.label;
 
                 if (!newData[groupKey]) return;
 

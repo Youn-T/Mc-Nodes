@@ -3,9 +3,9 @@ import { useDropzone } from 'react-dropzone';
 import { useCallback } from 'react';
 
 import {ImportFiles, GenerateData} from '../filesystem/Import';
-import { explorerData, browserData } from './Navbar';
+import type { ExplorerData, BrowserData } from '../types/workspace';
 
-function Importer({onDataImport}: {onDataImport: (importedData: { explorer: explorerData, browser: browserData },importedFiles: Record<string, {blob: Blob, url: string}>) => void}) {
+function Importer({onDataImport}: {onDataImport: (importedData: { explorer: ExplorerData, browser: BrowserData },importedFiles: Record<string, {blob: Blob, url: string}>) => void}) {
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         const importedFiles = await ImportFiles(acceptedFiles); 
         
@@ -13,18 +13,6 @@ function Importer({onDataImport}: {onDataImport: (importedData: { explorer: expl
             const data = await GenerateData(importedFiles);
             onDataImport(data, importedFiles);
         }
-        // acceptedFiles.forEach((file : File) => {
-        //     const reader = new FileReader()
-
-        //     reader.onabort = () => console.log('file reading was aborted')
-        //     reader.onerror = () => console.log('file reading has failed')
-        //     reader.onload = () => {
-        //         // Do whatever you want with the file contents
-        //         const binaryStr = reader.result
-        //         console.log(binaryStr)
-        //     }
-        //     reader.readAsArrayBuffer(file)
-        // })
 
     }, [])
     const { getRootProps, getInputProps } = useDropzone({ onDrop })

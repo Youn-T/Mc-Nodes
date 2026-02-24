@@ -16,10 +16,11 @@ import {
 import '@xyflow/react/dist/style.css';
 import ContextMenu from './ContextualMenu';
 
-import CustomNode, { CustomNodeType } from './CustomNode';
+import CustomNode from './CustomNode';
+import type { CustomNodeType } from '../types/graph';
 import './CustomNode.css';
 import './ContextualMenu.css';
-import { SocketType } from '../nodes/types';
+import { SocketType } from '../types/nodes';
 
 const nodeTypes = {
   custom: CustomNode,

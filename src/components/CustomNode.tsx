@@ -1,61 +1,13 @@
-import { memo, useState, useRef, useEffect } from 'react';
-import { Handle, Position, useHandleConnections, Node } from '@xyflow/react';
-import { Diamond, Triangle } from 'lucide-react'
+import { memo, useState, useRef, useEffect, useId } from 'react';
+import { Handle, Position, useHandleConnections } from '@xyflow/react';
+import { Diamond, Triangle } from 'lucide-react';
 
-import { SocketType, SocketMode } from '../nodes/types';
+import { SocketType, SocketMode } from '../types/nodes';
+import type { SocketData, CustomNodeData, CustomNodeType } from '../types/graph';
+import { socketColors } from '../constants/colors';
+import { socketDefaultValue } from '../constants/socketDefaults';
 
-export type SocketData = {
-  id: string;
-  label: string;
-  type: string;
-  mode?: string;
-  value?: string | Record<string, string>; // string pour les types simples, Record pour les vecteurs {0: "x", 1: "y", 2: "z"}
-  options?: string[]; // Pour les inputs de type select/dropdown
-};
-
-export type CustomNodeData = {
-  label: string;
-  headerColor?: string;
-  inputs?: SocketData[];
-  outputs?: SocketData[];
-  category?: string;
-  name?: string;
-  wrapped?: boolean;
-  deletable?: boolean; // Si false, le node ne peut pas être supprimé
-
-  groupKey?: string; // Clé du component group dans les données
-  componentKey?: string; // Clé du composant dans les données
-  parentGroupKey?: string; // Clé du group parent pour les composants
-
-  eventKey?: string; // Clé de l'event dans les données (pour les nodes d'event)
-  onDataChange?: (socketId: string, value: string | Record<string, string>, isOutput: boolean) => void;
-};
-
-export type CustomNodeType = Node<CustomNodeData, 'custom'>;
-
-
-// Couleurs par type de socket
-const socketColors: Record<string, string> = {
-  boolean: "#CC4545",
-  integer: "#CC9645",
-  float: "#B1CC45",
-  string: "#60CC45",
-  vector: "#45CC7B",
-  entity: "#45CCCC",
-  item: "#457BCC",
-  block: "#6045CC",
-  player: "#B145CC",
-  rotation: "#CC4596",
-  camera: "#457BCC",
-};
-
-const socketDefaultValue = {
-  boolean: false,
-  integer: 0,
-  float: 0.0,
-  string: "",
-  vector: 0,
-}
+export type { SocketData, CustomNodeData, CustomNodeType };
 
 const InputRow = ({ input, internalId, getSocketValue, updateSocketValue }: {
   input: SocketData,
@@ -125,6 +77,7 @@ const InputRow = ({ input, internalId, getSocketValue, updateSocketValue }: {
 };
 
 function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boolean; id?: string }) {
+  const nodeId = useId();
   const {
     label,
     headerColor = '#2d8f6f',
@@ -135,7 +88,7 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
   } = data;
 
   const [wrapped, setWrapped] = useState(Object.prototype.hasOwnProperty.call(data, 'wrapped') ? !data.wrapped : true);
-  const internalId = Math.random().toString(36).substring(2, 9);
+  const internalId = nodeId;
 
   // Fonction pour obtenir la valeur d'un socket (input ou output)
   const getSocketValue = (socket: SocketData, componentIndex?: number): string => {

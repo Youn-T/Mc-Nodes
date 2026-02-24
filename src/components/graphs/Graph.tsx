@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect, useState } from 'react';
+import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 import {
     ReactFlow,
     addEdge,
@@ -6,20 +6,24 @@ import {
     useEdgesState,
     useNodesState,
     Background,
-    getOutgoers,
     OnNodeDrag,
     useReactFlow,
     reconnectEdge,
     Edge,
     Connection,
+    NodeChange,
+    EdgeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import ContextMenu from '../ContextualMenu';
 
-import CustomNode, { CustomNodeType } from '../CustomNode';
+import CustomNode from '../CustomNode';
+import type { CustomNodeType } from '../../types/graph';
+import type { SocketData } from '../../types/graph';
 import '../CustomNode.css';
 import '../ContextualMenu.css';
-import { SocketType } from '../../nodes/types';
+import { SocketType } from '../../types/nodes';
+import { useConnectionValidator } from '../../hooks/useConnectionValidator';
 
 const nodeTypes = {
     custom: CustomNode,
@@ -27,13 +31,13 @@ const nodeTypes = {
 
 const panOnDrag = [1]; // Seulement le clic molette pour React Flow, on gère le clic droit manuellement
 
-function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdgesUpdate, onNodesUpdate, customIsValidConnection }: { initialNodes?: CustomNodeType[], initialEdges?: Edge[], className?: string, menu_?: any, menuItems?: any, nodes_?: any, onNodesUpdate?: (nodes: CustomNodeType[]) => void, onEdgesUpdate?: (nodes: Edge[]) => void, customIsValidConnection?: (connection: any) => boolean }) {
+function Graph({ initialNodes, initialEdges, menuItems, nodes_, onEdgesUpdate, onNodesUpdate, customIsValidConnection }: { initialNodes?: CustomNodeType[], initialEdges?: Edge[], className?: string, menu_?: any, menuItems?: any, nodes_?: any, onNodesUpdate?: (nodes: CustomNodeType[]) => void, onEdgesUpdate?: (nodes: Edge[]) => void, customIsValidConnection?: (connection: any) => boolean }) {
     const [nodes, setNodesState, onNodesChangeBase] = useNodesState(initialNodes || []);
 
     // Wrapper pour empêcher la suppression des nodes avec deletable: false
     const onNodesChange = useCallback(
-        (changes: any[]) => {
-            const filteredChanges = changes.filter((change: any) => {
+        (changes: NodeChange<CustomNodeType>[]) => {
+            const filteredChanges = changes.filter((change) => {
                 if (change.type === 'remove') {
                     const node = nodes.find((n) => n.id === change.id);
                     if (node?.data?.deletable === false) {
@@ -50,8 +54,8 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdg
 
     // Wrapper pour empêcher la suppression des edges avec deletable: false
     const onEdgesChange = useCallback(
-        (changes: any[]) => {
-            const filteredChanges = changes.filter((change: any) => {
+        (changes: EdgeChange[]) => {
+            const filteredChanges = changes.filter((change) => {
                 if (change.type === 'remove') {
                     const edge = edges.find((e) => e.id === change.id);
                     if (edge?.deletable === false) {
@@ -95,13 +99,13 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdg
     const [snapToGrid, setSnapToGrid] = useState(false);
 
     // Callback pour mettre à jour les valeurs d'un socket (input ou output) d'un node
-    const { setNodes, getNodes, getEdges } = useReactFlow<CustomNodeType, Edge>();
+    const { setNodes } = useReactFlow<CustomNodeType, Edge>();
     const onNodeDataChange = useCallback((nodeId: string, socketId: string, value: string | Record<string, string>, isOutput: boolean) => {
         setNodes((nds) =>
             nds.map((node) => {
                 if (node.id === nodeId) {
                     const socketList = isOutput ? 'outputs' : 'inputs';
-                    const updatedSockets = (node.data[socketList] || []).map((socket: any) => {
+                    const updatedSockets = (node.data[socketList] || []).map((socket: SocketData) => {
                         if (socket.id === socketId) {
                             return { ...socket, value };
                         }
@@ -451,31 +455,30 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdg
         };
     }, []);
 
+    const isValidConnection = useConnectionValidator(nodes);
+
     const onConnect = useCallback(
         (connection: Connection) => {
+            if (!isValidConnection(connection)) return;
+
             const target = nodes.find(n => n.id === connection.target);
-            const source = nodes.find(n => n.id === connection.source);
-            if (!target || !source) return;
-            const targetHandle = target.data.inputs?.find((h: any) => h.id === connection.targetHandle);
-            const sourceHandle = source.data.outputs?.find((h: any) => h.id === connection.sourceHandle);
+            const targetHandle = target?.data.inputs?.find(
+                (h: SocketData) => h.id === connection.targetHandle,
+            );
 
-            if ((sourceHandle?.mode !== targetHandle?.mode) || (sourceHandle?.type !== targetHandle?.type && !(targetHandle?.type === SocketType.FLOAT && sourceHandle?.type === SocketType.INT) && sourceHandle?.type !== SocketType.OTHER && targetHandle?.type !== SocketType.OTHER)) {
-                return;
-            }
-
-            const previousEdges = edges.filter(e => (e.target === connection.target && e.targetHandle === connection.targetHandle));
+            const previousEdges = edges.filter(
+                e => e.target === connection.target && e.targetHandle === connection.targetHandle,
+            );
 
             if (targetHandle?.type === SocketType.COMPONENT) {
-                setEdges((eds) => (addEdge(connection, eds)));
-
+                setEdges(eds => addEdge(connection, eds));
             } else {
-                setEdges((eds) => (addEdge(connection, eds)).filter(e => !previousEdges.includes(e)));
-
+                setEdges(eds =>
+                    addEdge(connection, eds).filter(e => !previousEdges.includes(e)),
+                );
             }
-
-
         },
-        [setEdges, nodes, edges],
+        [setEdges, nodes, edges, isValidConnection],
     );
 
     // NODE ADD TO EDGE
@@ -609,60 +612,17 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdg
 
     // NODE ADD TO EDGE
     // Injecter la callback onDataChange dans chaque node
-    const nodesWithCallback = nodes.map((node) => ({
-        ...node,
-        data: {
-            ...node.data,
-            onDataChange: (socketId: string, value: string | Record<string, string>, isOutput: boolean) =>
-                onNodeDataChange(node.id, socketId, value, isOutput),
-        },
-    }));
-
-    const isValidConnection = useCallback(
-        (connection: any) => {
-            // we are using getNodes and getEdges helpers here
-            // to make sure we create isValidConnection function only once
-            const nodes = getNodes();
-            const edges = getEdges();
-            const target = nodes.find((node) => node.id === connection.target);
-            const source = nodes.find((node) => node.id === connection.source);
-
-            // CYCLE DETECTION
-            const hasCycle = (node: any, visited = new Set()) => {
-                if (visited.has(node.id)) return false;
-
-                visited.add(node.id);
-
-                for (const outgoer of getOutgoers(node, nodes, edges)) {
-                    if (outgoer.id === connection.source) return true;
-                    if (hasCycle(outgoer, visited)) return true;
-                }
-            };
-
-            if (target?.id === connection.source) return false;
-
-            // CONNECTION HERITAGE
-            const isParent = (parent: string, node: string) => {
-                const inComers = edges.filter(edge => edge.target === node && edge.targetHandle === "trigger")
-
-                for (const inComer of inComers) {
-                    if (parent === inComer.source) return true;
-                    if (isParent(parent, inComer.source)) return true;
-                }
-
-                return false;
-            }
-
-            const outs = edges.filter(edge => edge.source === source?.id)
-            const ins = edges.filter(edge => edge.target === source?.id) // BRICLOAGE
-
-
-            // console.log("isValidConnection", connection, "hasCycle?", (connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true));
-
-            return !hasCycle(target) && ((connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true) || (ins.length === 0 && outs.length === 0));
-
-        },
-        [getNodes, getEdges],
+    const nodesWithCallback = useMemo(
+        () =>
+            nodes.map((node) => ({
+                ...node,
+                data: {
+                    ...node.data,
+                    onDataChange: (socketId: string, value: string | Record<string, string>, isOutput: boolean) =>
+                        onNodeDataChange(node.id, socketId, value, isOutput),
+                },
+            })),
+        [nodes, onNodeDataChange],
     );
 
 

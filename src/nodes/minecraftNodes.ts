@@ -1,4 +1,5 @@
-import { SocketMode, SocketType, rawNode } from './types';
+import { SocketMode, SocketType } from '../types/nodes';
+import type { rawNode } from '../types/nodes';
 
 export const minecraftNodes: rawNode[] = [
     // ==========================================

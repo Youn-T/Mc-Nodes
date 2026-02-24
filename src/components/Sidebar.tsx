@@ -1,5 +1,7 @@
 import  { useState } from 'react';
 import { Compilator } from '../compilator/compilator';
+import type { CompilationGraph } from '../types/compilator';
+
 interface SidebarProps {
   nodes?: any[];
   edges?: any[];
@@ -9,9 +11,10 @@ export default function Sidebar({ nodes = [], edges = [] }: SidebarProps) {
   const [generated, setGenerated] = useState('');
 
   const generateCode = (): void => {
-    const payload = { nodes: nodes, connections: edges };
-    const compilator = new Compilator(payload as any);
-    setGenerated(compilator.compile());
+    const payload: CompilationGraph = { nodes, connections: edges };
+    const compilator = new Compilator(payload);
+    const result = compilator.compile();
+    setGenerated(result.output);
   };
 
 

@@ -1,6 +1,6 @@
 import React, { JSX, useCallback, useEffect, useState } from 'react';
 import { Edge, ReactFlowState, useReactFlow, useStore } from '@xyflow/react';
-import { menu, nodes } from '../nodes/nodes';
+import { menu as defaultMenu, nodes as defaultNodes } from '../nodes/nodes';
 import { Search } from 'lucide-react';
 
 type ContextMenuProps = {
@@ -77,7 +77,7 @@ function MenuItem({ node, renderMenu, rfInstance, setMenu, connectTo }: MenuItem
         // Support both node key (string) and node object
         const nodeData = typeof node.node === 'object' 
           ? node.node 
-          : nodes[node.node as keyof typeof nodes];
+          : defaultNodes[node.node as keyof typeof defaultNodes];
 
         addNodes({
           ...nodeData,
@@ -162,8 +162,8 @@ export default function ContextMenu({
   rfInstance,
   setMenu,
   connectTo,
-  menu_=menu,
-  nodes_=nodes,
+  menu_=defaultMenu,
+  nodes_=defaultNodes,
   ...props
 }: ContextMenuProps) {
 
@@ -191,8 +191,11 @@ export default function ContextMenu({
   const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleKeyDown = useCallback((_event: KeyboardEvent): void => {
-    setSearchMode(true);
+  const handleKeyDown = useCallback((event: KeyboardEvent): void => {
+    // Only activate search for printable characters (ignore Escape, Tab, arrows, etc.)
+    if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      setSearchMode(true);
+    }
   }, []);
 
   useEffect(() => {

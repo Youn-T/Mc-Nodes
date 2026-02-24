@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { CustomNodeType, SocketData } from "../../CustomNode";
 import { Edge } from "@xyflow/react";
 import { EventData } from "../EntityEditor";
+import { SocketMode, SocketType } from "../../../types/nodes";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -46,10 +47,10 @@ const generateEventMenu = (componentGroups: string[], eventNames: string[]) => {
                     label: "Add Component Group",
                     headerColor: ACTION_COLORS.add_component_group,
                     inputs: [
-                        { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                        { id: "component_group", label: "component group", type: "string", mode: "value", value: componentGroups[0] || "", options: componentGroups }
+                        { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                        { id: "component_group", label: "component group", type: SocketType.STRING, mode: SocketMode.VALUE, value: componentGroups[0] || "", options: componentGroups }
                     ],
-                    outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                    outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
                     wrapped: true,
                 }
             }
@@ -63,10 +64,10 @@ const generateEventMenu = (componentGroups: string[], eventNames: string[]) => {
                     label: "Remove Component Group",
                     headerColor: ACTION_COLORS.remove_component_group,
                     inputs: [
-                        { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                        { id: "component_group", label: "component group", type: "string", mode: "value", value: componentGroups[0] || "", options: componentGroups }
+                        { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                        { id: "component_group", label: "component group", type: SocketType.STRING, mode: SocketMode.VALUE, value: componentGroups[0] || "", options: componentGroups }
                     ],
-                    outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                    outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
                     wrapped: true,
                 }
             }
@@ -80,11 +81,11 @@ const generateEventMenu = (componentGroups: string[], eventNames: string[]) => {
                     label: "Set Property",
                     headerColor: ACTION_COLORS.set_property,
                     inputs: [
-                        { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                        { id: "property_name", label: "property", type: "string", mode: "value", value: "" },
-                        { id: "property_value", label: "value", type: "string", mode: "value", value: "" }
+                        { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                        { id: "property_name", label: "property", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" },
+                        { id: "property_value", label: "value", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" }
                     ],
-                    outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                    outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
                     wrapped: true,
                 }
             }
@@ -98,10 +99,10 @@ const generateEventMenu = (componentGroups: string[], eventNames: string[]) => {
                     label: "Trigger Event",
                     headerColor: ACTION_COLORS.trigger,
                     inputs: [
-                        { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                        { id: "event", label: "event", type: "string", mode: "value", value: "", options: eventNames }
+                        { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                        { id: "event", label: "event", type: SocketType.STRING, mode: SocketMode.VALUE, value: "", options: eventNames }
                     ],
-                    outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                    outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
                     wrapped: true,
                 }
             }
@@ -114,8 +115,8 @@ const generateEventMenu = (componentGroups: string[], eventNames: string[]) => {
                     category: "stop_movement",
                     label: "Stop Movement",
                     headerColor: ACTION_COLORS.stop_movement,
-                    inputs: [{ id: "trigger", label: "trigger", type: "trigger", mode: "trigger" }],
-                    outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                    inputs: [{ id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
+                    outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
                     wrapped: true,
                 }
             }
@@ -129,10 +130,10 @@ const generateEventMenu = (componentGroups: string[], eventNames: string[]) => {
                     label: "Play Sound",
                     headerColor: ACTION_COLORS.play_sound,
                     inputs: [
-                        { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                        { id: "sound", label: "sound", type: "string", mode: "value", value: "" }
+                        { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                        { id: "sound", label: "sound", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" }
                     ],
-                    outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                    outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
                     wrapped: true,
                 }
             }
@@ -145,8 +146,8 @@ const generateEventMenu = (componentGroups: string[], eventNames: string[]) => {
                     category: "set_home_position",
                     label: "Set Home Position",
                     headerColor: ACTION_COLORS.set_home_position,
-                    inputs: [{ id: "trigger", label: "trigger", type: "trigger", mode: "trigger" }],
-                    outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                    inputs: [{ id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
+                    outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
                     wrapped: true,
                 }
             }
@@ -162,10 +163,10 @@ const generateEventMenu = (componentGroups: string[], eventNames: string[]) => {
                     category: "sequence",
                     label: "Sequence",
                     headerColor: ACTION_COLORS.sequence,
-                    inputs: [{ id: "trigger", label: "trigger", type: "trigger", mode: "trigger" }],
+                    inputs: [{ id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
                     outputs: [
-                        { id: "step_0", label: "step 1", type: "trigger", mode: "trigger" },
-                        { id: "step_1", label: "step 2", type: "trigger", mode: "trigger" },
+                        { id: "step_0", label: "step 1", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                        { id: "step_1", label: "step 2", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
                     ],
                     wrapped: true,
                 }
@@ -180,13 +181,13 @@ const generateEventMenu = (componentGroups: string[], eventNames: string[]) => {
                     label: "Randomize",
                     headerColor: ACTION_COLORS.randomize,
                     inputs: [
-                        { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                        { id: "weight_0", label: "weight 1", type: "integer", mode: "value", value: "1" },
-                        { id: "weight_1", label: "weight 2", type: "integer", mode: "value", value: "1" },
+                        { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                        { id: "weight_0", label: "weight 1", type: SocketType.INT, mode: SocketMode.VALUE, value: "1" },
+                        { id: "weight_1", label: "weight 2", type: SocketType.INT, mode: SocketMode.VALUE, value: "1" },
                     ],
                     outputs: [
-                        { id: "option_0", label: "option 1", type: "trigger", mode: "trigger" },
-                        { id: "option_1", label: "option 2", type: "trigger", mode: "trigger" },
+                        { id: "option_0", label: "option 1", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                        { id: "option_1", label: "option 2", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
                     ],
                     wrapped: true,
                 }
@@ -201,13 +202,13 @@ const generateEventMenu = (componentGroups: string[], eventNames: string[]) => {
                     label: "Filter",
                     headerColor: ACTION_COLORS.filter,
                     inputs: [
-                        { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                        { id: "test", label: "test", type: "string", mode: "value", value: "" },
-                        { id: "subject", label: "subject", type: "string", mode: "value", value: "self" },
-                        { id: "operator", label: "operator", type: "string", mode: "value", value: "equals" },
-                        { id: "filter_value", label: "value", type: "string", mode: "value", value: "" }
+                        { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                        { id: "test", label: "test", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" },
+                        { id: "subject", label: "subject", type: SocketType.STRING, mode: SocketMode.VALUE, value: "self" },
+                        { id: "operator", label: "operator", type: SocketType.STRING, mode: SocketMode.VALUE, value: "equals" },
+                        { id: "filter_value", label: "value", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" }
                     ],
-                    outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                    outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
                     wrapped: true,
                 }
             }
@@ -227,10 +228,10 @@ const generateEventMenuNodes = (componentGroups: string[], eventNames: string[])
             label: "Add Component Group",
             headerColor: ACTION_COLORS.add_component_group,
             inputs: [
-                { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                { id: "component_group", label: "component group", type: "string", mode: "value", value: componentGroups[0] || "", options: componentGroups }
+                { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "component_group", label: "component group", type: SocketType.STRING, mode: SocketMode.VALUE, value: componentGroups[0] || "", options: componentGroups }
             ],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             wrapped: true,
         }
     };
@@ -242,10 +243,10 @@ const generateEventMenuNodes = (componentGroups: string[], eventNames: string[])
             label: "Remove Component Group",
             headerColor: ACTION_COLORS.remove_component_group,
             inputs: [
-                { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                { id: "component_group", label: "component group", type: "string", mode: "value", value: componentGroups[0] || "", options: componentGroups }
+                { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "component_group", label: "component group", type: SocketType.STRING, mode: SocketMode.VALUE, value: componentGroups[0] || "", options: componentGroups }
             ],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             wrapped: true,
         }
     };
@@ -257,11 +258,11 @@ const generateEventMenuNodes = (componentGroups: string[], eventNames: string[])
             label: "Set Property",
             headerColor: ACTION_COLORS.set_property,
             inputs: [
-                { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                { id: "property_name", label: "property", type: "string", mode: "value", value: "" },
-                { id: "property_value", label: "value", type: "string", mode: "value", value: "" }
+                { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "property_name", label: "property", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" },
+                { id: "property_value", label: "value", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" }
             ],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             wrapped: true,
         }
     };
@@ -273,10 +274,10 @@ const generateEventMenuNodes = (componentGroups: string[], eventNames: string[])
             label: "Trigger Event",
             headerColor: ACTION_COLORS.trigger,
             inputs: [
-                { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                { id: "event", label: "event", type: "string", mode: "value", value: "", options: eventNames }
+                { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "event", label: "event", type: SocketType.STRING, mode: SocketMode.VALUE, value: "", options: eventNames }
             ],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             wrapped: true,
         }
     };
@@ -287,8 +288,8 @@ const generateEventMenuNodes = (componentGroups: string[], eventNames: string[])
             category: "stop_movement",
             label: "Stop Movement",
             headerColor: ACTION_COLORS.stop_movement,
-            inputs: [{ id: "trigger", label: "trigger", type: "trigger", mode: "trigger" }],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            inputs: [{ id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             wrapped: true,
         }
     };
@@ -300,10 +301,10 @@ const generateEventMenuNodes = (componentGroups: string[], eventNames: string[])
             label: "Play Sound",
             headerColor: ACTION_COLORS.play_sound,
             inputs: [
-                { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                { id: "sound", label: "sound", type: "string", mode: "value", value: "" }
+                { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "sound", label: "sound", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" }
             ],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             wrapped: true,
         }
     };
@@ -314,8 +315,8 @@ const generateEventMenuNodes = (componentGroups: string[], eventNames: string[])
             category: "set_home_position",
             label: "Set Home Position",
             headerColor: ACTION_COLORS.set_home_position,
-            inputs: [{ id: "trigger", label: "trigger", type: "trigger", mode: "trigger" }],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            inputs: [{ id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             wrapped: true,
         }
     };
@@ -326,10 +327,10 @@ const generateEventMenuNodes = (componentGroups: string[], eventNames: string[])
             category: "sequence",
             label: "Sequence",
             headerColor: ACTION_COLORS.sequence,
-            inputs: [{ id: "trigger", label: "trigger", type: "trigger", mode: "trigger" }],
+            inputs: [{ id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             outputs: [
-                { id: "step_0", label: "step 1", type: "trigger", mode: "trigger" },
-                { id: "step_1", label: "step 2", type: "trigger", mode: "trigger" },
+                { id: "step_0", label: "step 1", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "step_1", label: "step 2", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
             ],
             wrapped: true,
         }
@@ -342,13 +343,13 @@ const generateEventMenuNodes = (componentGroups: string[], eventNames: string[])
             label: "Randomize",
             headerColor: ACTION_COLORS.randomize,
             inputs: [
-                { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                { id: "weight_0", label: "weight 1", type: "integer", mode: "value", value: "1" },
-                { id: "weight_1", label: "weight 2", type: "integer", mode: "value", value: "1" },
+                { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "weight_0", label: "weight 1", type: SocketType.INT, mode: SocketMode.VALUE, value: "1" },
+                { id: "weight_1", label: "weight 2", type: SocketType.INT, mode: SocketMode.VALUE, value: "1" },
             ],
             outputs: [
-                { id: "option_0", label: "option 1", type: "trigger", mode: "trigger" },
-                { id: "option_1", label: "option 2", type: "trigger", mode: "trigger" },
+                { id: "option_0", label: "option 1", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "option_1", label: "option 2", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
             ],
             wrapped: true,
         }
@@ -361,13 +362,13 @@ const generateEventMenuNodes = (componentGroups: string[], eventNames: string[])
             label: "Filter",
             headerColor: ACTION_COLORS.filter,
             inputs: [
-                { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                { id: "test", label: "test", type: "string", mode: "value", value: "" },
-                { id: "subject", label: "subject", type: "string", mode: "value", value: "self" },
-                { id: "operator", label: "operator", type: "string", mode: "value", value: "equals" },
-                { id: "filter_value", label: "value", type: "string", mode: "value", value: "" }
+                { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "test", label: "test", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" },
+                { id: "subject", label: "subject", type: SocketType.STRING, mode: SocketMode.VALUE, value: "self" },
+                { id: "operator", label: "operator", type: SocketType.STRING, mode: SocketMode.VALUE, value: "equals" },
+                { id: "filter_value", label: "value", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" }
             ],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             wrapped: true,
         }
     };
@@ -456,13 +457,13 @@ function createChainFromData(
             category: "filter",
             headerColor: ACTION_COLORS.filter,
             inputs: [
-                { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                { id: "test", label: "test", type: "string", mode: "value", value: actionData.filters.test || "" },
-                { id: "subject", label: "subject", type: "string", mode: "value", value: actionData.filters.subject || "self" },
-                { id: "operator", label: "operator", type: "string", mode: "value", value: actionData.filters.operator || "equals" },
-                { id: "filter_value", label: "value", type: "string", mode: "value", value: String(actionData.filters.value ?? "") },
+                { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "test", label: "test", type: SocketType.STRING, mode: SocketMode.VALUE, value: actionData.filters.test || "" },
+                { id: "subject", label: "subject", type: SocketType.STRING, mode: SocketMode.VALUE, value: actionData.filters.subject || "self" },
+                { id: "operator", label: "operator", type: SocketType.STRING, mode: SocketMode.VALUE, value: actionData.filters.operator || "equals" },
+                { id: "filter_value", label: "value", type: SocketType.STRING, mode: SocketMode.VALUE, value: String(actionData.filters.value ?? "") },
             ],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
         });
     }
 
@@ -474,11 +475,11 @@ function createChainFromData(
                 category: "set_property",
                 headerColor: ACTION_COLORS.set_property,
                 inputs: [
-                    { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                    { id: "property_name", label: "property", type: "string", mode: "value", value: String(propName) },
-                    { id: "property_value", label: "value", type: "string", mode: "value", value: String(propValue) },
+                    { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                    { id: "property_name", label: "property", type: SocketType.STRING, mode: SocketMode.VALUE, value: String(propName) },
+                    { id: "property_value", label: "value", type: SocketType.STRING, mode: SocketMode.VALUE, value: String(propValue) },
                 ],
-                outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             });
         });
     }
@@ -490,10 +491,10 @@ function createChainFromData(
                 category: "add_component_group",
                 headerColor: ACTION_COLORS.add_component_group,
                 inputs: [
-                    { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                    { id: "component_group", label: "component group", type: "string", mode: "value", value: cg, options: componentGroups },
+                    { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                    { id: "component_group", label: "component group", type: SocketType.STRING, mode: SocketMode.VALUE, value: cg, options: componentGroups },
                 ],
-                outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             });
         });
     }
@@ -505,10 +506,10 @@ function createChainFromData(
                 category: "remove_component_group",
                 headerColor: ACTION_COLORS.remove_component_group,
                 inputs: [
-                    { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                    { id: "component_group", label: "component group", type: "string", mode: "value", value: cg, options: componentGroups },
+                    { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                    { id: "component_group", label: "component group", type: SocketType.STRING, mode: SocketMode.VALUE, value: cg, options: componentGroups },
                 ],
-                outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
             });
         });
     }
@@ -518,8 +519,8 @@ function createChainFromData(
             label: "Stop Movement",
             category: "stop_movement",
             headerColor: ACTION_COLORS.stop_movement,
-            inputs: [{ id: "trigger", label: "trigger", type: "trigger", mode: "trigger" }],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            inputs: [{ id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
         });
     }
 
@@ -529,10 +530,10 @@ function createChainFromData(
             category: "play_sound",
             headerColor: ACTION_COLORS.play_sound,
             inputs: [
-                { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                { id: "sound", label: "sound", type: "string", mode: "value", value: actionData.play_sound.sound || "" },
+                { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "sound", label: "sound", type: SocketType.STRING, mode: SocketMode.VALUE, value: actionData.play_sound.sound || "" },
             ],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
         });
     }
 
@@ -541,8 +542,8 @@ function createChainFromData(
             label: "Set Home Position",
             category: "set_home_position",
             headerColor: ACTION_COLORS.set_home_position,
-            inputs: [{ id: "trigger", label: "trigger", type: "trigger", mode: "trigger" }],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            inputs: [{ id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
         });
     }
 
@@ -553,10 +554,10 @@ function createChainFromData(
             category: "trigger",
             headerColor: ACTION_COLORS.trigger,
             inputs: [
-                { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
-                { id: "event", label: "event", type: "string", mode: "value", value: triggerValue, options: allEventKeys },
+                { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
+                { id: "event", label: "event", type: SocketType.STRING, mode: SocketMode.VALUE, value: triggerValue, options: allEventKeys },
             ],
-            outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+            outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
         });
     }
 
@@ -567,11 +568,11 @@ function createChainFromData(
         const seqNodeId = existing?.id || genId();
         const steps = actionData.sequence as any[];
 
-        const stepOutputs = steps.map((_: any, i: number) => ({
-            id: `step_${i}`, label: `step ${i + 1}`, type: "trigger", mode: "trigger"
+        const stepOutputs: SocketData[] = steps.map((_: any, i: number) => ({
+            id: `step_${i}`, label: `step ${i + 1}`, type: SocketType.TRIGGER, mode: SocketMode.TRIGGER
         }));
         // Un port de plus pour pouvoir ajouter une étape
-        stepOutputs.push({ id: `step_${steps.length}`, label: `step ${steps.length + 1}`, type: "trigger", mode: "trigger" });
+        stepOutputs.push({ id: `step_${steps.length}`, label: `step ${steps.length + 1}`, type: SocketType.TRIGGER, mode: SocketMode.TRIGGER });
 
         nodes.push({
             id: seqNodeId,
@@ -583,7 +584,7 @@ function createChainFromData(
                 headerColor: ACTION_COLORS.sequence,
                 parentGroupKey: parentKey,
                 componentKey: seqKey,
-                inputs: [{ id: "trigger", label: "trigger", type: "trigger", mode: "trigger" }],
+                inputs: [{ id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
                 outputs: stepOutputs,
                 wrapped: true,
             }
@@ -619,17 +620,17 @@ function createChainFromData(
         const randNodeId = existing?.id || genId();
         const options = actionData.randomize as any[];
 
-        const optOutputs = options.map((_: any, i: number) => ({
-            id: `option_${i}`, label: `option ${i + 1}`, type: "trigger", mode: "trigger"
+        const optOutputs: SocketData[] = options.map((_: any, i: number) => ({
+            id: `option_${i}`, label: `option ${i + 1}`, type: SocketType.TRIGGER, mode: SocketMode.TRIGGER
         }));
         // Un port de plus pour permettre d'ajouter une option
-        optOutputs.push({ id: `option_${options.length}`, label: `option ${options.length + 1}`, type: "trigger", mode: "trigger" });
+        optOutputs.push({ id: `option_${options.length}`, label: `option ${options.length + 1}`, type: SocketType.TRIGGER, mode: SocketMode.TRIGGER });
 
-        const weightInputs = options.map((opt: any, i: number) => ({
-            id: `weight_${i}`, label: `weight ${i + 1}`, type: "integer", mode: "value", value: String(opt.weight ?? 1)
+        const weightInputs: SocketData[] = options.map((opt: any, i: number) => ({
+            id: `weight_${i}`, label: `weight ${i + 1}`, type: SocketType.INT, mode: SocketMode.VALUE, value: String(opt.weight ?? 1)
         }));
         // Poids pour le port supplémentaire
-        weightInputs.push({ id: `weight_${options.length}`, label: `weight ${options.length + 1}`, type: "integer", mode: "value", value: "1" });
+        weightInputs.push({ id: `weight_${options.length}`, label: `weight ${options.length + 1}`, type: SocketType.INT, mode: SocketMode.VALUE, value: "1" });
 
         nodes.push({
             id: randNodeId,
@@ -642,7 +643,7 @@ function createChainFromData(
                 parentGroupKey: parentKey,
                 componentKey: randKey,
                 inputs: [
-                    { id: "trigger", label: "trigger", type: "trigger", mode: "trigger" },
+                    { id: "trigger", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER },
                     ...weightInputs,
                 ],
                 outputs: optOutputs,
@@ -841,7 +842,7 @@ function EventGraph({ eventData, setEventData, componentGroups }: { eventData: E
                     label: eventNames[eventKey] || eventKey,
                     headerColor: ACTION_COLORS.event,
                     groupKey: eventKey,
-                    outputs: [{ id: "trigger_out", label: "trigger", type: "trigger", mode: "trigger" }],
+                    outputs: [{ id: "trigger_out", label: "trigger", type: SocketType.TRIGGER, mode: SocketMode.TRIGGER }],
                     deletable: false,
                 }
             });
@@ -897,7 +898,7 @@ function EventGraph({ eventData, setEventData, componentGroups }: { eventData: E
         nodes.forEach(node => {
             if (node.data.groupKey) {
                 const eventActions = collectChainActions(node.id, "trigger_out", nodes, edges);
-                newData[node.data.groupKey] = eventActions;
+                newData[node.data.groupKey as string] = eventActions;
             }
         });
 
@@ -926,11 +927,11 @@ function EventGraph({ eventData, setEventData, componentGroups }: { eventData: E
                             ...node.data,
                             outputs: [
                                 ...(node.data.outputs || []),
-                                { id: `option_${newIdx}`, label: `option ${newIdx + 1}`, type: "trigger", mode: "trigger" }
+                                { id: `option_${newIdx}`, label: `option ${newIdx + 1}`, type: SocketType.TRIGGER, mode: SocketMode.TRIGGER } as SocketData
                             ],
                             inputs: [
                                 ...(node.data.inputs || []),
-                                { id: `weight_${newIdx}`, label: `weight ${newIdx + 1}`, type: "integer", mode: "value", value: "1" }
+                                { id: `weight_${newIdx}`, label: `weight ${newIdx + 1}`, type: SocketType.INT, mode: SocketMode.VALUE, value: "1" } as SocketData
                             ],
                         }
                     };
@@ -952,7 +953,7 @@ function EventGraph({ eventData, setEventData, componentGroups }: { eventData: E
                             ...node.data,
                             outputs: [
                                 ...(node.data.outputs || []),
-                                { id: `step_${newIdx}`, label: `step ${newIdx + 1}`, type: "trigger", mode: "trigger" }
+                                { id: `step_${newIdx}`, label: `step ${newIdx + 1}`, type: SocketType.TRIGGER, mode: SocketMode.TRIGGER } as SocketData
                             ],
                         }
                     };
@@ -1073,7 +1074,7 @@ function EventGraph({ eventData, setEventData, componentGroups }: { eventData: E
                                                     data: {
                                                         ...n.data,
                                                         parentGroupKey: newKey,
-                                                        componentKey: n.data.componentKey?.replace(eventKey, newKey)
+                                                        componentKey: (n.data.componentKey as string)?.replace(eventKey, newKey)
                                                     }
                                                 };
                                             }

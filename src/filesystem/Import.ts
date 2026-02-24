@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { explorerData, browserData } from '../components/Navbar';
+import type { ExplorerData, BrowserData } from '../types/workspace';
 
 export async function ImportFiles(files: File[]): Promise<Record<string, { blob: Blob, url: string }>> {
     const filesMap: Record<string, { blob: Blob, url: string }> = {};
@@ -33,13 +33,11 @@ export async function ImportFiles(files: File[]): Promise<Record<string, { blob:
             filesMap[file.name] = { blob: file, url: URL.createObjectURL(file) };
         }
     }
-    // console.log('Imported files:', filesMap, Object.keys(filesMap).length);
     return filesMap;
 }
 
-export async function GenerateData(files: Record<string, { blob: Blob, url: string }>): Promise<{ explorer: explorerData, browser: browserData }> {
-    const data: { explorer: explorerData, browser: browserData } = { explorer: { entities: {}, blocks: {}, items: {}, scripts: {} }, browser: { textures: [], models: [], audio: [] } };
-    // console.log('Generating data from files:', files);
+export async function GenerateData(files: Record<string, { blob: Blob, url: string }>): Promise<{ explorer: ExplorerData, browser: BrowserData }> {
+    const data: { explorer: ExplorerData, browser: BrowserData } = { explorer: { entities: {}, blocks: {}, items: {}, scripts: {} }, browser: { textures: [], models: [], audio: [] } };
     const constRootDirs = new Set(Object.keys(files).map(fileName => fileName.split('/')[0]));
     let detectedResourcePack: string = "";
     let detectedBehaviorPack: string = "";
@@ -47,7 +45,6 @@ export async function GenerateData(files: Record<string, { blob: Blob, url: stri
     for (const rootDir of constRootDirs) {
         if (Object.prototype.hasOwnProperty.call(files, `${rootDir}/manifest.json`)) {
             const manifestContent = await files[`${rootDir}/manifest.json`].blob.text();
-            // console.log('Parsing manifest for rootDir:', rootDir, manifestContent);
             const manifest = JSON.parse(manifestContent);
             if (manifest?.modules?.find((mod: { type: string }) => mod.type === 'resources')) {
                 detectedResourcePack = rootDir;
@@ -57,11 +54,9 @@ export async function GenerateData(files: Record<string, { blob: Blob, url: stri
             }
         }
     }
-    // console.log(Object.keys(files).length, 'files detected. Resource Pack:', detectedResourcePack, 'Behavior Pack:', detectedBehaviorPack);
     for (const fileName of Object.keys(files)) {
         const isInResourcePack = detectedResourcePack !== "" && fileName.startsWith(detectedResourcePack + '/');
         const isInBehaviorPack = detectedBehaviorPack !== "" && fileName.startsWith(detectedBehaviorPack + '/');
-        // console.log('Processing file:', fileName, 'isInResourcePack:', isInResourcePack, 'isInBehaviorPack:', isInBehaviorPack);
 
         if (isInResourcePack) {
             if (fileName.includes('/sounds/') && (fileName.endsWith('.ogg') || fileName.endsWith('.mp3') || fileName.endsWith('.wav'))) {
@@ -93,7 +88,6 @@ export async function GenerateData(files: Record<string, { blob: Blob, url: stri
             if (fileName.includes('/entities/') && (fileName.endsWith('.json'))) {
                 try {
                     const text = (await files[fileName].blob.text()).replace(/\/\*.+?\*\/|\/\/.*(?=[\n\r])/g, '');
-                    // console.log('Parsing entity file:', fileName, text);
                     const entityId = JSON.parse(text)["minecraft:entity"].description.identifier;
                     if (!data.explorer.entities[entityId]) data.explorer.entities[entityId] = {};
 
@@ -104,33 +98,7 @@ export async function GenerateData(files: Record<string, { blob: Blob, url: stri
                 }
             }
         }
-        /*if (fileName.endsWith('.ogg') || fileName.endsWith('.wav') || fileName.endsWith('.mp3')) {
-            data.browser.audio.push({ name: fileName, url: files[fileName].url, blob: files[fileName].blob });
-        }
-
-        if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
-            data.browser.textures.push({ name: fileName, url: files[fileName].url, blob: files[fileName].blob });
-        }
-
-        if (fileName.endsWith('.bbmodel') || fileName.includes('.geo.json')) {
-            data.browser.models.push({ name: fileName, url: files[fileName].url, blob: files[fileName].blob });
-        }
-
-        if (fileName.endsWith('.json') && fileName.includes('entities')) { // TODO : renforcer la détection des entités
-            data.explorer.entities.push({ name: fileName, url: files[fileName].url, blob: files[fileName].blob });
-        }
-        if (fileName.endsWith('.json') && fileName.includes('blocks')) { // TODO : renforcer la détection des entités
-            data.explorer.blocks.push({ name: fileName, url: files[fileName].url, blob: files[fileName].blob });
-        }
-        if (fileName.endsWith('.json') && fileName.includes('items')) { // TODO : renforcer la détection des entités
-            data.explorer.items.push({ name: fileName, url: files[fileName].url, blob: files[fileName].blob });
-        }
-        if ((fileName.endsWith('.js') || fileName.endsWith('.ts')) && fileName.includes('scripts')) { // TODO : renforcer la détection des entités
-            data.explorer.scripts.push({ name: fileName, url: files[fileName].url, blob: files[fileName].blob });
-        }*/
 
     }
-    // console.log('Import completed', data);
     return data;
 }
-
