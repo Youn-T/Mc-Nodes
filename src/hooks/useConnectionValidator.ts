@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useCallback } from 'react';
-import type { Connection } from '@xyflow/react';
+import type { Connection, Edge } from '@xyflow/react';
 import { SocketMode, SocketType } from '../types/nodes';
 import type { CustomNodeType } from '../types/graph';
 
@@ -53,7 +53,7 @@ export function isSocketConnectionValid(
  */
 export function useConnectionValidator(nodes: CustomNodeType[]) {
     return useCallback(
-        (connection: Connection): boolean => {
+        (connection: Edge | Connection): boolean => {
             const source = nodes.find(n => n.id === connection.source);
             const target = nodes.find(n => n.id === connection.target);
             if (!source || !target) return false;

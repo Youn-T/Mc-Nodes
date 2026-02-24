@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { CustomNodeType, SocketData } from "../../CustomNode";
 import { Edge } from "@xyflow/react";
+import { SocketType, SocketMode } from "../../../types/nodes";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -436,7 +437,7 @@ function astToNodes(
             const queryDef = MOLANG_QUERIES.find(q => q.name === queryName);
 
             const inputs = (queryDef?.params || []).map((p, idx) => ({
-                id: p.id, label: p.label, type: "string", mode: "value",
+                id: p.id, label: p.label, type: SocketType.STRING as SocketType, mode: SocketMode.VALUE as SocketMode,
                 value: ast.params?.[idx] || p.defaultValue
             }));
 
@@ -450,7 +451,7 @@ function astToNodes(
                     label: queryDef?.label || queryName,
                     headerColor: MOLANG_COLORS.query,
                     inputs,
-                    outputs: [{ id: "molang", label: "molang", type: "string", mode: "value" }],
+                    outputs: [{ id: "molang", label: "molang", type: SocketType.STRING, mode: SocketMode.VALUE }],
                     wrapped: true,
                 }
             });
@@ -473,9 +474,9 @@ function astToNodes(
                     label: "Expression",
                     headerColor: MOLANG_COLORS.expression,
                     inputs: [
-                        { id: "expression", label: "expression", type: "string", mode: "value", value: ast.value || "" }
+                        { id: "expression", label: "expression", type: SocketType.STRING, mode: SocketMode.VALUE, value: ast.value || "" }
                     ],
-                    outputs: [{ id: "molang", label: "molang", type: "string", mode: "value" }],
+                    outputs: [{ id: "molang", label: "molang", type: SocketType.STRING, mode: SocketMode.VALUE }],
                     wrapped: true,
                 }
             });
@@ -503,10 +504,10 @@ function astToNodes(
                     label,
                     headerColor: color,
                     inputs: [
-                        { id: "a", label: "A", type: "string", mode: "value", value: "" },
-                        { id: "b", label: "B", type: "string", mode: "value", value: "" }
+                        { id: "a", label: "A", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" },
+                        { id: "b", label: "B", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" }
                     ],
-                    outputs: [{ id: "molang", label: "molang", type: "string", mode: "value" }],
+                    outputs: [{ id: "molang", label: "molang", type: SocketType.STRING, mode: SocketMode.VALUE }],
                     wrapped: true,
                 }
             });
@@ -539,9 +540,9 @@ function astToNodes(
                     label: "NOT (!)",
                     headerColor: MOLANG_COLORS.not,
                     inputs: [
-                        { id: "a", label: "input", type: "string", mode: "value", value: "" }
+                        { id: "a", label: "input", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" }
                     ],
-                    outputs: [{ id: "molang", label: "molang", type: "string", mode: "value" }],
+                    outputs: [{ id: "molang", label: "molang", type: SocketType.STRING, mode: SocketMode.VALUE }],
                     wrapped: true,
                 }
             });
@@ -570,11 +571,11 @@ function astToNodes(
                     label: "Comparison",
                     headerColor: MOLANG_COLORS.comparison,
                     inputs: [
-                        { id: "left", label: "left", type: "string", mode: "value", value: "" },
-                        { id: "operator", label: "operator", type: "string", mode: "value", value: ast.operator || "==", options: ["==", "!=", ">", "<", ">=", "<="] },
-                        { id: "right", label: "right", type: "string", mode: "value", value: "" }
+                        { id: "left", label: "left", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" },
+                        { id: "operator", label: "operator", type: SocketType.STRING, mode: SocketMode.VALUE, value: ast.operator || "==", options: ["==", "!=", ">", "<", ">=", "<="] },
+                        { id: "right", label: "right", type: SocketType.STRING, mode: SocketMode.VALUE, value: "" }
                     ],
-                    outputs: [{ id: "molang", label: "molang", type: "string", mode: "value" }],
+                    outputs: [{ id: "molang", label: "molang", type: SocketType.STRING, mode: SocketMode.VALUE }],
                     wrapped: true,
                 }
             });
@@ -717,7 +718,7 @@ function RenderControllersGraph({ renderControllersData, setRenderControllersDat
                     label: rcNames[index] !== undefined ? rcNames[index] : formatRCName(name),
                     headerColor: MOLANG_COLORS.output,
                     groupKey: name,
-                    inputs: [{ id: "condition", label: "condition", type: "string", mode: "value" }],
+                    inputs: [{ id: "condition", label: "condition", type: SocketType.STRING, mode: SocketMode.VALUE }],
                     deletable: false,
                 }
             });

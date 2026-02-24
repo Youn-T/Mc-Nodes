@@ -94,7 +94,7 @@ function Navbar({
                                     {
                                         Object.keys(data.explorer[key as keyof typeof data.explorer]).map((item: any, index: number) => {
 
-                                            return (<div key={index} className={`pl-8 text-sm capitalize py-0.5 hover:bg-neutral-700/75 select-none text-sm font-medium ${ currentItem?.name === item && currentItem?.tab === currentTab ? 'bg-neutral-700' : '' }`} onClick={() => {setCurrentItem({name: item, tab: currentTab});onItemSelect?.({ tab: currentTab, section: key, item: data.explorer[key as keyof typeof data.explorer]?.[item], index })}}> {item.split(":")[1].split("_").join(" ")/*.name?.split('/')?.pop()*/}</div>)
+                                            return (<div key={index} className={`pl-8 text-sm capitalize py-0.5 hover:bg-neutral-700/75 select-none font-medium ${ currentItem?.name === item && currentItem?.tab === currentTab ? 'bg-neutral-700' : '' }`} onClick={() => {setCurrentItem({name: item, tab: currentTab});onItemSelect?.({ tab: currentTab, section: key, item: data.explorer[key as keyof typeof data.explorer]?.[item], index })}}> {item.split(":")[1].split("_").join(" ")/*.name?.split('/')?.pop()*/}</div>)
                                         })
                                     }
                                 </div>
@@ -120,7 +120,7 @@ function Navbar({
                                     {
                                         data.browser[key as keyof typeof data.browser].map((item: any, index: number) => {
                                             const Icon = browserIcons[key as keyof typeof browserIcons];
-                                            return (<div key={index} className={`flex items-center pl-8 text-sm capitalize py-0.5 hover:bg-neutral-700/75 select-none text-sm font-medium ${ currentItem?.name === item && currentItem?.tab === currentTab ? 'bg-neutral-700' : '' }`} onClick={() => {setCurrentItem({name: item, tab: currentTab});onItemSelect?.({ tab: currentTab, section: key, item, index })}}><Icon className="w-4 h-4 mr-1" /> {item.name.split('/').pop()}</div>)
+                                            return (<div key={index} className={`flex items-center pl-8 text-sm capitalize py-0.5 hover:bg-neutral-700/75 select-none font-medium ${ currentItem?.name === item && currentItem?.tab === currentTab ? 'bg-neutral-700' : '' }`} onClick={() => {setCurrentItem({name: item, tab: currentTab});onItemSelect?.({ tab: currentTab, section: key, item, index })}}><Icon className="w-4 h-4 mr-1" /> {item.name.split('/').pop()}</div>)
                                         })
                                     }
                                 </div>

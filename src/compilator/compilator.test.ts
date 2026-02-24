@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { Compilator } from './compilator';
-import type { CompilationGraph, CompilationNode, CompilationConnection } from '../types/compilator';
+import type { CompilationGraph, CompilationNode, CompilationConnection, NodeHandle } from '../types/compilator';
 import { SocketMode, SocketType } from '../types/nodes';
 
 // ---------- Helpers ----------
@@ -30,7 +30,7 @@ function makeNode(
                 label: i.id,
                 mode: i.mode ?? SocketMode.VALUE,
                 type: i.type ?? SocketType.OTHER,
-                value: i.value,
+                value: i.value as NodeHandle['value'],
             })),
             outputs: outputs.map(o => ({
                 id: o.id,

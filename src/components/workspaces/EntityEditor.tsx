@@ -1,6 +1,6 @@
 import { JSX, useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, Eye, EyeOff, Workflow, Box, Settings, Plus, Trash2, FunctionSquare, Zap, Component, Layers, Printer } from "lucide-react";
-import { EntityData, minecraftComponents, parseComponentGroups, parseComponents, parseEvents } from "../../editors/entityEditor";
+import { ChevronDown, ChevronRight, Eye, EyeOff, Workflow, Box, Plus, Trash2, FunctionSquare, Zap, Component, Layers, Printer } from "lucide-react";
+import { EntityData, minecraftComponents, parseComponentGroups, parseComponents } from "../../editors/entityEditor";
 import { BasicSelector } from "../utils/BasicSelector";
 
 import { useWorkspace } from '../../contexts/WorkspaceContext';
@@ -508,7 +508,7 @@ function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url:
                                             // console.log('Rendering texture key:', clientData?.description?.textures[key]);
                                             return (
                                                 <div className="bg-neutral-700 rounded px-2  text-sm py-1 flex items-center gap-2 group" key={key}>
-                                                    <img className="w-11 h-11 bg-neutral-600 rounded flex-shrink-0 " style={{ imageRendering: 'pixelated' }} src={data?.browser.textures.find(img => img.name.split("/").slice(1).join("/").replace(".png", "") === clientData?.description?.textures[key])?.url}></img>
+                                                    <img className="w-11 h-11 bg-neutral-600 rounded shrink-0 " style={{ imageRendering: 'pixelated' }} src={data?.browser.textures.find(img => img.name.split("/").slice(1).join("/").replace(".png", "") === clientData?.description?.textures[key])?.url}></img>
 
                                                     {/* <div className="">
 
@@ -596,7 +596,7 @@ function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url:
                                                         }} />
                                                         <div className="mb-1"></div>
                                                     </div>
-                                                    <Trash2 size={12} className="text-neutral-500 hover:text-red-400 cursor-pointer flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => {
+                                                    <Trash2 size={12} className="text-neutral-500 hover:text-red-400 cursor-pointer shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => {
                                                         e.stopPropagation();
                                                         setClientData((prev: any) => {
                                                             const next = { ...prev };
@@ -643,7 +643,7 @@ function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url:
                                 {(clientData?.description?.render_controllers || []).map((rc: string | Record<string, string>, idx: number) => (
                                     <div key={idx} className="flex items-center gap-2 group">
                                         <div className="flex-1"><RenderControllerItem rc={rc} /></div>
-                                        <Trash2 size={12} className="text-neutral-500 hover:text-red-400 cursor-pointer flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => {
+                                        <Trash2 size={12} className="text-neutral-500 hover:text-red-400 cursor-pointer shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => {
                                             e.stopPropagation();
                                             setClientData((prev: any) => {
                                                 const next = { ...prev };
@@ -679,7 +679,7 @@ function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url:
                                         <span className="text-neutral-300">{key}</span>
                                         <div className="flex items-center gap-1">
                                             <span className="text-xs text-neutral-500 truncate">{String(value).split(".").pop()}</span>
-                                            <Trash2 size={12} className="text-neutral-500 hover:text-red-400 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => {
+                                            <Trash2 size={12} className="text-neutral-500 hover:text-red-400 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={(e) => {
                                                 e.stopPropagation();
                                                 setClientData((prev: any) => {
                                                     const next = { ...prev };

@@ -6,7 +6,6 @@ import {
     useEdgesState,
     useNodesState,
     Background,
-    getOutgoers,
     OnNodeDrag,
     useReactFlow,
     reconnectEdge,
@@ -31,7 +30,7 @@ const nodeTypes = {
 
 const panOnDrag = [1]; // Seulement le clic molette pour React Flow, on gère le clic droit manuellement
 
-function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdgesUpdate, onNodesUpdate, customIsValidConnection }: { initialNodes?: CustomNodeType[], initialEdges?: Edge[], className?: string, menu_?: any, menuItems?: any, nodes_?: any, onNodesUpdate?: (nodes: CustomNodeType[]) => void, onEdgesUpdate?: (nodes: Edge[]) => void, customIsValidConnection?: (connection: any) => boolean }) {
+function Graph({ initialNodes, initialEdges, className: _className, menuItems, nodes_, onEdgesUpdate, onNodesUpdate, customIsValidConnection }: { initialNodes?: CustomNodeType[], initialEdges?: Edge[], className?: string, menu_?: any, menuItems?: any, nodes_?: any, onNodesUpdate?: (nodes: CustomNodeType[]) => void, onEdgesUpdate?: (nodes: Edge[]) => void, customIsValidConnection?: (connection: any) => boolean }) {
     const [nodes, setNodesState, onNodesChangeBase] = useNodesState(initialNodes || []);
 
     // Wrapper pour empêcher la suppression des nodes avec deletable: false
@@ -99,7 +98,7 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdg
     const [snapToGrid, setSnapToGrid] = useState(false);
 
     // Callback pour mettre à jour les valeurs d'un socket (input ou output) d'un node
-    const { setNodes, getNodes, getEdges } = useReactFlow<CustomNodeType, Edge>();
+    const { setNodes } = useReactFlow<CustomNodeType, Edge>();
     const onNodeDataChange = useCallback((nodeId: string, socketId: string, value: string | Record<string, string>, isOutput: boolean) => {
         setNodes((nds) =>
             nds.map((node) => {
@@ -625,52 +624,52 @@ function Graph({ initialNodes, initialEdges, className, menuItems, nodes_, onEdg
         [nodes, onNodeDataChange],
     );
 
-    const isValidConnection = useCallback(
-        (connection: any) => {
-            // we are using getNodes and getEdges helpers here
-            // to make sure we create isValidConnection function only once
-            const nodes = getNodes();
-            const edges = getEdges();
-            const target = nodes.find((node) => node.id === connection.target);
-            const source = nodes.find((node) => node.id === connection.source);
+    // const isValidConnection = useCallback(
+    //     (connection: any) => {
+    //         // we are using getNodes and getEdges helpers here
+    //         // to make sure we create isValidConnection function only once
+    //         const nodes = getNodes();
+    //         const edges = getEdges();
+    //         const target = nodes.find((node) => node.id === connection.target);
+    //         const source = nodes.find((node) => node.id === connection.source);
 
-            // CYCLE DETECTION
-            const hasCycle = (node: any, visited = new Set()) => {
-                if (visited.has(node.id)) return false;
+    //         // CYCLE DETECTION
+    //         const hasCycle = (node: any, visited = new Set()) => {
+    //             if (visited.has(node.id)) return false;
 
-                visited.add(node.id);
+    //             visited.add(node.id);
 
-                for (const outgoer of getOutgoers(node, nodes, edges)) {
-                    if (outgoer.id === connection.source) return true;
-                    if (hasCycle(outgoer, visited)) return true;
-                }
-            };
+    //             for (const outgoer of getOutgoers(node, nodes, edges)) {
+    //                 if (outgoer.id === connection.source) return true;
+    //                 if (hasCycle(outgoer, visited)) return true;
+    //             }
+    //         };
 
-            if (target?.id === connection.source) return false;
+    //         if (target?.id === connection.source) return false;
 
-            // CONNECTION HERITAGE
-            const isParent = (parent: string, node: string) => {
-                const inComers = edges.filter(edge => edge.target === node && edge.targetHandle === "trigger")
+    //         // CONNECTION HERITAGE
+    //         const isParent = (parent: string, node: string) => {
+    //             const inComers = edges.filter(edge => edge.target === node && edge.targetHandle === "trigger")
 
-                for (const inComer of inComers) {
-                    if (parent === inComer.source) return true;
-                    if (isParent(parent, inComer.source)) return true;
-                }
+    //             for (const inComer of inComers) {
+    //                 if (parent === inComer.source) return true;
+    //                 if (isParent(parent, inComer.source)) return true;
+    //             }
 
-                return false;
-            }
+    //             return false;
+    //         }
 
-            const outs = edges.filter(edge => edge.source === source?.id)
-            const ins = edges.filter(edge => edge.target === source?.id) // BRICLOAGE
+    //         const outs = edges.filter(edge => edge.source === source?.id)
+    //         const ins = edges.filter(edge => edge.target === source?.id) // BRICLOAGE
 
 
-            // console.log("isValidConnection", connection, "hasCycle?", (connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true));
+    //         // console.log("isValidConnection", connection, "hasCycle?", (connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true));
 
-            return !hasCycle(target) && ((connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true) || (ins.length === 0 && outs.length === 0));
+    //         return !hasCycle(target) && ((connection.sourceHandle !== "trigger" ? isParent(source?.id || "", target?.id || "") : true) || (ins.length === 0 && outs.length === 0));
 
-        },
-        [getNodes, getEdges],
-    );
+    //     },
+    //     [getNodes, getEdges],
+    // );
 
 
     return (

@@ -224,10 +224,10 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
           <span className="custom-node-title">{label}</span>
         </div>
         {/* Body */}
-        <div className="pb-[8px] flex justify-between">
+        <div className="pb-2 flex justify-between">
           {/* Outputs (droite) */}
 
-          <div className="gap-y-[6px] flex flex-col">
+          <div className="gap-y-1.5 flex flex-col">
             {/* Inputs (gauche) */}
             {inputs.map((input, _index) => (
               <div key={input.id} className="custom-node-row input-row">
@@ -273,7 +273,7 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
                 {/* <span className="custom-node-socket-indicator" style={{ background: socketColors[input.type] || socketColors.default }} /> */}
               </div>
             ))}</div>
-          <div className="gap-y-[6px] flex flex-col">
+          <div className="gap-y-1.5 flex flex-col">
             {outputs.map((output, _index) => (
               <div key={output.id} className="custom-node-row output-row">
                 <Handle
@@ -365,7 +365,7 @@ function CustomDropdown({ value, options, onChange, label }: {
       </div>
       {isOpen && (
         <div
-          className="absolute z-[100] mt-0.5 rounded shadow-lg overflow-y-auto custom-menu-scroll"
+          className="absolute z-100 mt-0.5 rounded shadow-lg overflow-y-auto custom-menu-scroll"
           style={{
             maxHeight: '160px',
             minWidth: '100%',
