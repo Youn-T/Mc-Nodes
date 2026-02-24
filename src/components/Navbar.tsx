@@ -1,5 +1,9 @@
 import { Box, ChevronDown, Compass, File, FolderDown, Image, Volume2 } from "lucide-react";
 import { useState } from "react";
+import type { ExplorerData, BrowserData } from '../types/workspace';
+
+// Re-export for backward compatibility with existing imports
+export type { ExplorerData as explorerData, BrowserData as browserData };
 
 const tabs = [
     {
@@ -22,24 +26,11 @@ const browserIcons = {
     audio: Volume2,
 };
 
-export interface explorerData {
-    entities: Record<string, { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }>,
-    blocks: Record<string, { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }>,
-    items: Record<string, { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }>,
-    scripts: Record<string, { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }>,
-}
-
-export interface browserData {
-    textures: any[],
-    models: any[],
-    audio: any[]
-}
-
 function Navbar({
     data,
     onItemSelect,
 }: {
-    data: { explorer: explorerData, browser: browserData },
+    data: { explorer: ExplorerData; browser: BrowserData };
     onItemSelect?: (payload: { tab: string, section?: string, item: any, index: number }) => void, // <-- ajouté
 }) {
     const [currentTab, setCurrentTab] = useState<string>('explorer');

@@ -5,8 +5,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "lint": "eslint src --max-warnings 0",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test"
   },
   "keywords": [],
   "author": "",
@@ -17,20 +22,31 @@
     "@xyflow/react": "^12.10.0",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
+    "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-dropzone": "^14.3.8",
-    "reactflow": "^11.11.4",
-    "tailwindcss": "^4.1.18",
-    "lucide-react": "^0.562.0"
+    "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.3",
+    "@playwright/test": "^1.58.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^25.0.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/ui": "^4.0.18",
+    "eslint": "^9.39.3",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "jsdom": "^28.1.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.0"
+    "typescript-eslint": "^8.56.1",
+    "vite": "^7.3.0",
+    "vitest": "^4.0.18"
   }
 }

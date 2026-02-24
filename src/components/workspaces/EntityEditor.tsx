@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, Eye, EyeOff, Workflow, Box, Settings, Plus, 
 import { EntityData, minecraftComponents, parseComponentGroups, parseComponents, parseEvents } from "../../editors/entityEditor";
 import { BasicSelector } from "../utils/BasicSelector";
 
-import { explorerData, browserData } from '../Navbar';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 import EventGraph from "./entityEditor/EventGraph";
 import ComponentGroupsGraph from "./entityEditor/ComponentGroupsGraph";
 import RenderControllersGraph from "./entityEditor/RenderControllersGraph";
@@ -110,7 +110,8 @@ function ComponentItem({ name, isOpen, onToggle, componentData, onValuesChange }
     );
 }
 
-function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }, onChange: (data: { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }) => void, data: { explorer: explorerData, browser: browserData } }) {
+function EntityEditor({ asset, onChange }: { asset: { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }, onChange: (data: { res?: { name: string, url: string, blob: Blob }, bev?: { name: string, url: string, blob: Blob } }) => void }) {
+    const { data } = useWorkspace();
     // const [resContent, setResContent] = useState<Record<string, any>>({});
     // const [behContent, setBehContent] = useState<Record<string, any>>({});
     const [activeTab, setActiveTab] = useState<Tab>("components");
@@ -121,11 +122,14 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
     const [clientData, setClientData] = useState<any>({});
     const [entityData, setEntityData] = useState<any>({});
 
-    onChange(asset); // TODO : remove this ; )
+    useEffect(() => {
+        onChange(asset);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [asset]);
 
     // Pré-calcul des options de géométrie à partir des models (évite 'await' dans le JSX)
     const [modelGeometryOptions, setModelGeometryOptions] = useState<string[]>([]);
-    const texturesOptions: string[] = data.browser.textures.map(img => formatTextureName(img.name)) || [];
+    const texturesOptions: string[] = data?.browser.textures.map(img => formatTextureName(img.name)) ?? [];
 
     useEffect(() => {
         let mounted = true;
@@ -504,7 +508,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                                             // console.log('Rendering texture key:', clientData?.description?.textures[key]);
                                             return (
                                                 <div className="bg-neutral-700 rounded px-2  text-sm py-1 flex items-center gap-2 group" key={key}>
-                                                    <img className="w-11 h-11 bg-neutral-600 rounded flex-shrink-0 " style={{ imageRendering: 'pixelated' }} src={data.browser.textures.find(img => img.name.split("/").slice(1).join("/").replace(".png", "") === clientData?.description?.textures[key])?.url}></img>
+                                                    <img className="w-11 h-11 bg-neutral-600 rounded flex-shrink-0 " style={{ imageRendering: 'pixelated' }} src={data?.browser.textures.find(img => img.name.split("/").slice(1).join("/").replace(".png", "") === clientData?.description?.textures[key])?.url}></img>
 
                                                     {/* <div className="">
 

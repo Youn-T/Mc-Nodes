@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { explorerData, browserData } from '../components/Navbar';
+import type { ExplorerData, BrowserData } from '../types/workspace';
 
 export async function ImportFiles(files: File[]): Promise<Record<string, { blob: Blob, url: string }>> {
     const filesMap: Record<string, { blob: Blob, url: string }> = {};
@@ -37,8 +37,8 @@ export async function ImportFiles(files: File[]): Promise<Record<string, { blob:
     return filesMap;
 }
 
-export async function GenerateData(files: Record<string, { blob: Blob, url: string }>): Promise<{ explorer: explorerData, browser: browserData }> {
-    const data: { explorer: explorerData, browser: browserData } = { explorer: { entities: {}, blocks: {}, items: {}, scripts: {} }, browser: { textures: [], models: [], audio: [] } };
+export async function GenerateData(files: Record<string, { blob: Blob, url: string }>): Promise<{ explorer: ExplorerData; browser: BrowserData }> {
+    const data: { explorer: ExplorerData; browser: BrowserData } = { explorer: { entities: {}, blocks: {}, items: {}, scripts: {} }, browser: { textures: [], models: [], audio: [] } };
     // console.log('Generating data from files:', files);
     const constRootDirs = new Set(Object.keys(files).map(fileName => fileName.split('/')[0]));
     let detectedResourcePack: string = "";
@@ -83,8 +83,8 @@ export async function GenerateData(files: Record<string, { blob: Blob, url: stri
                     if (!data.explorer.entities[entityId]) data.explorer.entities[entityId] = {};
 
                     data.explorer.entities[entityId]["res"] = { name: fileName, url: files[fileName].url, blob: files[fileName].blob };
-                } catch {
-                    // Failed to parse entity file
+                } catch (err) {
+                    console.warn(`[Import] Failed to parse resource entity file: ${fileName}`, err);
                 }
             }
         }

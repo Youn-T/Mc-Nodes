@@ -1,4 +1,4 @@
-import { SocketMode, SocketType, rawNode } from './types';
+import { SocketMode, SocketType, NodeDefinition } from '../types';
 
 // ==========================================
 // EVENT NODES DEFINITION
@@ -8,7 +8,7 @@ import { SocketMode, SocketType, rawNode } from './types';
     Reference: https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server/worldafterevents
 */
 
-export const eventNodes: rawNode[] = [
+export const eventNodes: NodeDefinition[] = [
     {
         name: 'block explode',
         inputs: [],
@@ -130,7 +130,7 @@ export const eventNodes: rawNode[] = [
         menu: ["Event", "Entity"]
     },
     {
-        name: 'entity remove',
+        name: 'entity remove event',
         inputs: [],
         outputs: [
             { name: 'trigger', mode: SocketMode.TRIGGER },

@@ -1,6 +1,7 @@
-import { SocketMode, SocketType, rawNode } from './types';
+import { SocketMode, SocketType, NodeDefinition } from '../types';
+/** @deprecated */ type rawNode = NodeDefinition;
 
-export const minecraftNodes: rawNode[] = [
+export const minecraftNodes: NodeDefinition[] = [
     // ==========================================
     // WORLD
     // ==========================================

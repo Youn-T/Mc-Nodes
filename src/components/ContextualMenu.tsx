@@ -191,8 +191,11 @@ export default function ContextMenu({
   const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleKeyDown = useCallback((_event: KeyboardEvent): void => {
-    setSearchMode(true);
+  const handleKeyDown = useCallback((event: KeyboardEvent): void => {
+    // Only activate search for printable characters (ignore Escape, Tab, arrows, etc.)
+    if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      setSearchMode(true);
+    }
   }, []);
 
   useEffect(() => {

@@ -3,9 +3,9 @@ import { useDropzone } from 'react-dropzone';
 import { useCallback } from 'react';
 
 import {ImportFiles, GenerateData} from '../filesystem/Import';
-import { explorerData, browserData } from './Navbar';
+import type { WorkspaceData } from '../types/workspace';
 
-function Importer({onDataImport}: {onDataImport: (importedData: { explorer: explorerData, browser: browserData },importedFiles: Record<string, {blob: Blob, url: string}>) => void}) {
+function Importer({onDataImport}: {onDataImport: (importedData: WorkspaceData, importedFiles: Record<string, {blob: Blob, url: string}>) => void}) {
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         const importedFiles = await ImportFiles(acceptedFiles); 
         
