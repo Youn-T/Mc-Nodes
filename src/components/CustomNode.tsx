@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, useHandleConnections, Node } from '@xyflow/react';
 import { Diamond, Triangle } from 'lucide-react'
 
@@ -10,6 +10,7 @@ export type SocketData = {
   type: string;
   mode?: string;
   value?: string | Record<string, string>; // string pour les types simples, Record pour les vecteurs {0: "x", 1: "y", 2: "z"}
+  options?: string[]; // Pour les inputs de type select/dropdown
 };
 
 export type CustomNodeData = {
@@ -21,9 +22,12 @@ export type CustomNodeData = {
   name?: string;
   wrapped?: boolean;
   deletable?: boolean; // Si false, le node ne peut pas être supprimé
+
   groupKey?: string; // Clé du component group dans les données
   componentKey?: string; // Clé du composant dans les données
   parentGroupKey?: string; // Clé du group parent pour les composants
+
+  eventKey?: string; // Clé de l'event dans les données (pour les nodes d'event)
   onDataChange?: (socketId: string, value: string | Record<string, string>, isOutput: boolean) => void;
 };
 
@@ -367,6 +371,84 @@ function CustomNode({ data, selected }: { data: CustomNodeData; selected?: boole
 }
 
 
+// ── Composant dropdown custom pour correspondre au style sombre ──────────────
+
+function CustomDropdown({ value, options, onChange, label }: {
+  value: string;
+  options: string[];
+  onChange: (val: string) => void;
+  label: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as unknown as globalThis.Node)) {
+        setIsOpen(false);
+      }
+    };
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="w-full relative" ref={containerRef}>
+      <div
+        className="custom-node-value-row cursor-pointer select-none"
+        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+      >
+        <span className="custom-node-value-label truncate">{label || "Value"}</span>
+        <span className="text-right flex items-center gap-1 text-white text-xs" style={{ maxWidth: '7.5rem' }}>
+          <span className="truncate">{value || '--'}</span>
+          <span className="text-neutral-400 text-[10px]">▾</span>
+        </span>
+      </div>
+      {isOpen && (
+        <div
+          className="absolute z-[100] mt-0.5 rounded shadow-lg overflow-y-auto custom-menu-scroll"
+          style={{
+            maxHeight: '160px',
+            minWidth: '100%',
+            left: 0,
+            right: 0,
+            background: '#1e1e1e',
+            border: '1px solid #3f3f3f',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            className="px-2 py-1 text-xs cursor-pointer"
+            style={{ color: '#999' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#3f3f3f'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+            onClick={() => { onChange(""); setIsOpen(false); }}
+          >--</div>
+          {options.map(opt => (
+            <div
+              key={opt}
+              className="px-2 py-1 text-xs cursor-pointer"
+              style={{
+                color: '#e0e0e0',
+                background: opt === value ? '#2d4a7c' : 'transparent',
+              }}
+              onMouseEnter={(e) => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = '#3f3f3f'; }}
+              onMouseLeave={(e) => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              onClick={() => { onChange(opt); setIsOpen(false); }}
+            >{opt}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function nodeInput({ type, socket, internalId, getSocketValue, updateSocketValue, isOutput, label }: {
   type: SocketType;
   socket: SocketData;
@@ -377,6 +459,20 @@ function nodeInput({ type, socket, internalId, getSocketValue, updateSocketValue
   label: string;
 }) {
   const id = socket.id;
+
+  // Cas spécial pour select/dropdown quand des options sont présentes
+  if (socket.options && socket.options.length > 0) {
+    const currentValue = getSocketValue(socket);
+    return (
+      <CustomDropdown
+        key={`${id}-select`}
+        value={currentValue}
+        options={socket.options}
+        onChange={(val) => updateSocketValue(id, val, isOutput)}
+        label={label || "Value"}
+      />
+    );
+  }
 
   // Cas spécial pour boolean : affiche une checkbox
   if (type === 'boolean') {

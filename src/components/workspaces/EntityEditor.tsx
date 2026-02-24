@@ -13,6 +13,9 @@ type GraphTab = 'events' | 'component groups' | 'render controllers';
 
 export type ComponentGroupsData = Record<string, any>;
 
+export type EventData = Record<string, Event>
+export type Event = Record<string, any>
+export type EventKeys = 'set_property' | 'add' | 'remove' | 'trigger' | 'sequence' | 'randomize' | 'stop_movement' | 'play_sound' | 'set_home_position' | 'filters';
 
 const alphabeticalSort = (values: string[]) => values.sort((a: string, b: string) => a.localeCompare(b));
 
@@ -280,6 +283,22 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
         });
     }
 
+    const setEventData = (newData: EventData) => {
+        setUserEntityData(prev => {
+            const next = { ...prev };
+            next.events = newData;
+            return next;
+        });
+    }
+
+    const setRenderControllersData = (newData: (string | Record<string, string>)[]) => {
+        setClientData((prev: any) => {
+            const next = { ...prev };
+            if (!next.description) next.description = {};
+            next.description = { ...next.description, render_controllers: newData };
+            return next;
+        });
+    }
 
     const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
         { id: "components", label: "Components", icon: <Component size={16} /> },
@@ -294,9 +313,9 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
     ];
 
     const graphComponents: Record<GraphTab, JSX.Element> = {
-        "events": <EventGraph eventData={entityData.events}></EventGraph>,
+        "events": <EventGraph eventData={entityData.events} setEventData={setEventData} componentGroups={Object.keys(userEntityData.componentGroups || {})}></EventGraph>,
         "component groups": <ComponentGroupsGraph componentGroupsData={userEntityData.componentGroups} setComponentGroupsData={setComponentGroupsData}></ComponentGroupsGraph>,
-        "render controllers": <RenderControllersGraph renderControllersData={clientData?.description?.render_controllers || []}></RenderControllersGraph>,
+        "render controllers": <RenderControllersGraph renderControllersData={clientData?.description?.render_controllers || []} setRenderControllersData={setRenderControllersData}></RenderControllersGraph>,
 
     }
 
@@ -401,8 +420,18 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                                     {
                                         Object.keys(clientData?.description?.geometry || {}).map((key: string) => {
                                             return (
-                                                <div className="bg-neutral-700 rounded px-2 pb-2 text-sm pt-1" key={key}>
-                                                    <input className="text-xs text-neutral-400 border-none outline-none mb-2" value={geometryNames[key] === undefined ? key : geometryNames[key]}
+                                                <div className="bg-neutral-700 rounded px-2 pb-2 text-sm pt-1 relative group" key={key}>
+                                                    <Trash2 size={12} className="absolute top-1.5 right-1.5 text-neutral-500 hover:text-red-400 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setClientData((prev: any) => {
+                                                            const next = { ...prev };
+                                                            const geom = { ...next.description.geometry };
+                                                            delete geom[key];
+                                                            next.description = { ...next.description, geometry: geom };
+                                                            return next;
+                                                        });
+                                                    }} />
+                                                    <input className="text-xs text-neutral-400 border-none outline-none mb-2 pr-5" value={geometryNames[key] === undefined ? key : geometryNames[key]}
                                                         spellCheck={false}
                                                         onChange={(e) =>
                                                             setGeometryNames(prev => ({ ...prev, [key]: e.target.value }))
@@ -455,7 +484,18 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                             <div className="p-3 border-b border-neutral-700">
                                 <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2 flex justify-between items-center">
                                     Textures
-                                    <button className="text-blue-400 hover:text-blue-300"><Plus size={14} /></button>
+                                    <button className="text-blue-400 hover:text-blue-300" onClick={(e) => {
+                                        e.stopPropagation();
+                                        setClientData((prev: any) => {
+                                            const next = { ...prev };
+                                            const textures = { ...(next.description?.textures || {}) };
+                                            let keyIdx = 1;
+                                            while (textures.hasOwnProperty("new_texture_" + keyIdx)) { keyIdx++; }
+                                            textures["new_texture_" + keyIdx] = "textures/entity/unknown";
+                                            next.description = { ...next.description, textures };
+                                            return next;
+                                        });
+                                    }}><Plus size={14} /></button>
                                 </div>
                                 <div className="flex flex-col gap-2">
 
@@ -463,7 +503,7 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                                         Object.keys(clientData?.description?.textures || {}).map((key) => {
                                             // console.log('Rendering texture key:', clientData?.description?.textures[key]);
                                             return (
-                                                <div className="bg-neutral-700 rounded px-2  text-sm py-1 flex items-center gap-2 " key={key}>
+                                                <div className="bg-neutral-700 rounded px-2  text-sm py-1 flex items-center gap-2 group" key={key}>
                                                     <img className="w-11 h-11 bg-neutral-600 rounded flex-shrink-0 " style={{ imageRendering: 'pixelated' }} src={data.browser.textures.find(img => img.name.split("/").slice(1).join("/").replace(".png", "") === clientData?.description?.textures[key])?.url}></img>
 
                                                     {/* <div className="">
@@ -552,9 +592,16 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                                                         }} />
                                                         <div className="mb-1"></div>
                                                     </div>
-                                                    {/* <div className="text-sm truncate" onClick={() => {}}>{clientData?.description?.geometry?.[key] || "geometry.unknown"}</div> */}
-
-                                                    {/* <div className="text-neutral-300">{}</div> */}
+                                                    <Trash2 size={12} className="text-neutral-500 hover:text-red-400 cursor-pointer flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setClientData((prev: any) => {
+                                                            const next = { ...prev };
+                                                            const textures = { ...next.description.textures };
+                                                            delete textures[key];
+                                                            next.description = { ...next.description, textures };
+                                                            return next;
+                                                        });
+                                                    }} />
                                                 </div>
                                             )
                                         })
@@ -574,9 +621,35 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
 
                             {/* Render Controllers */}
                             <div className="p-3 border-b border-neutral-700">
-                                <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Render Controllers</div>
-                                {(clientData?.description?.render_controllers || []).map((rc: string | Record<string, string>) => (
-                                    <RenderControllerItem rc={rc} ></RenderControllerItem>
+                                <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2 flex justify-between items-center">
+                                    Render Controllers
+                                    <button className="text-blue-400 hover:text-blue-300" onClick={(e) => {
+                                        e.stopPropagation();
+                                        setClientData((prev: any) => {
+                                            const next = { ...prev };
+                                            const rcs = [...(next.description?.render_controllers || [])];
+                                            let keyIdx = 1;
+                                            while (rcs.some((r: any) => (typeof r === 'string' ? r : Object.keys(r)[0]) === `controller.render.new_${keyIdx}`)) { keyIdx++; }
+                                            rcs.push(`controller.render.new_${keyIdx}`);
+                                            next.description = { ...next.description, render_controllers: rcs };
+                                            return next;
+                                        });
+                                    }}><Plus size={14} /></button>
+                                </div>
+                                {(clientData?.description?.render_controllers || []).map((rc: string | Record<string, string>, idx: number) => (
+                                    <div key={idx} className="flex items-center gap-2 group">
+                                        <div className="flex-1"><RenderControllerItem rc={rc} /></div>
+                                        <Trash2 size={12} className="text-neutral-500 hover:text-red-400 cursor-pointer flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => {
+                                            e.stopPropagation();
+                                            setClientData((prev: any) => {
+                                                const next = { ...prev };
+                                                const rcs = [...(next.description?.render_controllers || [])];
+                                                rcs.splice(idx, 1);
+                                                next.description = { ...next.description, render_controllers: rcs };
+                                                return next;
+                                            });
+                                        }} />
+                                    </div>
                                 ))}
                             </div>
 
@@ -584,12 +657,35 @@ function EntityEditor({ asset, onChange, data }: { asset: { res?: { name: string
                             <div className="p-3">
                                 <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2 flex justify-between items-center">
                                     Animations
-                                    <button className="text-blue-400 hover:text-blue-300"><Plus size={14} /></button>
+                                    <button className="text-blue-400 hover:text-blue-300" onClick={(e) => {
+                                        e.stopPropagation();
+                                        setClientData((prev: any) => {
+                                            const next = { ...prev };
+                                            const anims = { ...(next.description?.animations || {}) };
+                                            let keyIdx = 1;
+                                            while (anims.hasOwnProperty("new_anim_" + keyIdx)) { keyIdx++; }
+                                            anims["new_anim_" + keyIdx] = "animation.unknown.new";
+                                            next.description = { ...next.description, animations: anims };
+                                            return next;
+                                        });
+                                    }}><Plus size={14} /></button>
                                 </div>
                                 {Object.entries(clientData?.description?.animations || {}).map(([key, value]) => (
-                                    <div key={key} className="flex items-center justify-between bg-neutral-700 rounded p-2 mb-1 text-sm">
+                                    <div key={key} className="flex items-center justify-between bg-neutral-700 rounded p-2 mb-1 text-sm group">
                                         <span className="text-neutral-300">{key}</span>
-                                        <span className="text-xs text-neutral-500 truncate ml-2">{String(value).split(".").pop()}</span>
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-xs text-neutral-500 truncate">{String(value).split(".").pop()}</span>
+                                            <Trash2 size={12} className="text-neutral-500 hover:text-red-400 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => {
+                                                e.stopPropagation();
+                                                setClientData((prev: any) => {
+                                                    const next = { ...prev };
+                                                    const anims = { ...next.description.animations };
+                                                    delete anims[key];
+                                                    next.description = { ...next.description, animations: anims };
+                                                    return next;
+                                                });
+                                            }} />
+                                        </div>
                                     </div>
                                 ))}
                             </div>
